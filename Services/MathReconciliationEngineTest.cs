@@ -126,6 +126,44 @@ namespace PostXMLTest.Services
         }
 
         [Fact]
+        public void Reconcile_WhenOpeningBalanceIsZero_InfersOpeningBalanceFromFirstTransaction()
+        {
+            // Arrange: Negative balance (e.g. OD/CC account)
+            // First transaction deposit 25,000, running balance -3,029,604.43
+            // Inferred opening: -3,029,604.43 - 25,000 = -3,054,604.43
+            var statement = new StatementDocument
+            {
+                OpeningBalance = 0m,
+                ClosingBalance = 0m,
+                Transactions = new List<BankTransaction>
+                {
+                    new()
+                    {
+                        DepositAmount = 25000.00m,
+                        WithdrawalAmount = 0m,
+                        RunningBalance = -3029604.43m
+                    },
+                    new()
+                    {
+                        DepositAmount = 4620.00m,
+                        WithdrawalAmount = 0m,
+                        RunningBalance = -3024984.43m
+                    }
+                }
+            };
+
+            // Act
+            var result = _engine.Reconcile(statement);
+
+            // Assert
+            result.IsFullyReconciled.Should().BeTrue();
+            statement.OpeningBalance.Should().Be(-3054604.43m);
+            statement.ClosingBalance.Should().Be(-3024984.43m);
+            result.MismatchedRowIndices.Should().BeEmpty();
+            result.DiscrepancyAmount.Should().Be(0m);
+        }
+
+        [Fact]
         public void Reconcile_WithNullDocument_ThrowsArgumentNullException()
         {
             var act = () => _engine.Reconcile(null!);

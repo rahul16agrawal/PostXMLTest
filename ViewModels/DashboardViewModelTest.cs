@@ -68,5 +68,23 @@ namespace PostXMLTest.ViewModels
             // Assert
             _viewModel.SelectedTab.Should().Be("Profile");
         }
+
+        [Fact]
+        public void CurrentViewProperty_CanBeSetAndRaisesPropertyChanged()
+        {
+            var dummyView = new object();
+            bool eventRaised = false;
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(_viewModel.CurrentView))
+                {
+                    eventRaised = true;
+                }
+            };
+
+            _viewModel.CurrentView = dummyView;
+            _viewModel.CurrentView.Should().Be(dummyView);
+            eventRaised.Should().BeTrue();
+        }
     }
 }

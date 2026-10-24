@@ -94,9 +94,21 @@ namespace PostXMLTest.Services
         }
 
         [Fact]
-        public void DetectBank_UnknownBank_ReturnsGenericProfile()
+        public void DetectBank_UnknownBankWithBankWord_ReturnsCustomProfile()
         {
             string sample = "Some Unrecognized Rural Co-operative Bank\nAccount Statement\nOnly Date and Amount";
+
+            var profile = _detector.DetectBank(sample);
+
+            Assert.NotNull(profile);
+            Assert.Equal("CUSTOM", profile.BankCode);
+            Assert.Equal("Some Unrecognized Rural Co-operative Bank", profile.DisplayName);
+        }
+
+        [Fact]
+        public void DetectBank_UnknownTextWithoutBankWord_ReturnsGenericProfile()
+        {
+            string sample = "Some Financial Ledger\nAccount Statement\nOnly Date and Amount";
 
             var profile = _detector.DetectBank(sample);
 

@@ -36,6 +36,26 @@ namespace PostXMLTest.Services
         }
 
         [Fact]
+        public void IsPdfEncrypted_WithEncryptedTrailer_ReturnsTrue()
+        {
+            byte[] fakePdfWithEncrypt = System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<</Root 1 0 R/Encrypt 2 0 R>>\n%%EOF");
+            using var stream = new MemoryStream(fakePdfWithEncrypt);
+
+            bool isEncrypted = _parser.IsPdfEncrypted(stream);
+            Assert.True(isEncrypted);
+        }
+
+        [Fact]
+        public void IsPdfEncrypted_WithoutEncryptTrailer_ReturnsFalse()
+        {
+            byte[] fakePdfNormal = System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF");
+            using var stream = new MemoryStream(fakePdfNormal);
+
+            bool isEncrypted = _parser.IsPdfEncrypted(stream);
+            Assert.False(isEncrypted);
+        }
+
+        [Fact]
         public void ParseLines_ExtractsMetadataAndTransactions()
         {
             var lines = new List<string>
@@ -144,6 +164,104 @@ namespace PostXMLTest.Services
             Assert.Equal(0m, t.WithdrawalAmount);
             Assert.Equal(45000.00m, t.RunningBalance);
             Assert.Equal(TransactionType.Deposit, t.Type);
+        }
+
+        [Fact]
+        public void ParseLines_UpiCreditWithSlash_CategorizedAsDeposit()
+        {
+            var lines = new List<string>
+            {
+                "01/08/2026 UPI/CR/621397903960/ARVIND K/SBIN/**87098@OKSBI 330.00 -3,029,604.43"
+            };
+
+            var profile = new BankProfile { BankCode = "CANARA", DisplayName = "Canara Bank" };
+            var doc = _parser.ParseLines(lines, profile);
+
+            Assert.Single(doc.Transactions);
+            var t = doc.Transactions[0];
+            Assert.Equal(330.00m, t.DepositAmount);
+            Assert.Equal(0m, t.WithdrawalAmount);
+            Assert.Equal(TransactionType.Deposit, t.Type);
+        }
+
+        [Fact]
+        public void ParseLines_WrappedTimestampLineWithoutAmounts_StitchedIntoNarrationNotNewTransaction()
+        {
+            var lines = new List<string>
+            {
+                "01/08/2026 UPI/CR/623656267627/KUNAL KUM/YESB/**08511@GOAXB 500.00 -3,029,104.43",
+                "01/08/2026 08:40:23 Date Particulars Withdrawals Deposits Balance"
+            };
+
+            var profile = new BankProfile { BankCode = "CANARA", DisplayName = "Canara Bank" };
+            var doc = _parser.ParseLines(lines, profile);
+
+            Assert.Single(doc.Transactions);
+            Assert.DoesNotContain("Date Particulars", doc.Transactions[0].RawNarration);
+        }
+
+        [Fact]
+        public void ParseLines_ReversalWithChargeKeyword_CategorizedAsDeposit()
+        {
+            var lines = new List<string>
+            {
+                "22/09/2026 REV:EXCESS SMS SC ENTRY DATED - 20-SEP-26 178.76 -3,714,745.81"
+            };
+
+            var profile = new BankProfile { BankCode = "CANARA", DisplayName = "Canara Bank" };
+            var doc = _parser.ParseLines(lines, profile);
+
+            Assert.Single(doc.Transactions);
+            var t = doc.Transactions[0];
+            Assert.Equal(178.76m, t.DepositAmount);
+            Assert.Equal(0m, t.WithdrawalAmount);
+            Assert.Equal(TransactionType.Deposit, t.Type);
+        }
+
+        [Fact]
+        public void ParseLines_PosPaymentWithUnderscore_CategorizedAsDeposit()
+        {
+            var lines = new List<string>
+            {
+                "22/09/2026 POS_PMNT_10061547_22092026 99.60 -3,714,646.21"
+            };
+
+            var profile = new BankProfile { BankCode = "CANARA", DisplayName = "Canara Bank" };
+            var doc = _parser.ParseLines(lines, profile);
+
+            Assert.Single(doc.Transactions);
+            var t = doc.Transactions[0];
+            Assert.Equal(99.60m, t.DepositAmount);
+            Assert.Equal(0m, t.WithdrawalAmount);
+            Assert.Equal(TransactionType.Deposit, t.Type);
+        }
+
+        [Fact]
+        public void ParseLines_DeclarativeProfile_ExtractsPartyAndReferenceFromNarration()
+        {
+            var definition = new BankProfileDefinition
+            {
+                BankName = "Canara Bank",
+                BankCode = "CANARA",
+                NarrationExtractors = new Dictionary<string, string>
+                {
+                    ["upi"] = @"UPI/(?:CR|DR)/(?<utr>\d+)/(?<party>[^/]+)/(?<vpa>[^/]+)"
+                }
+            };
+
+            var profile = definition.ToLegacyProfile();
+
+            var lines = new List<string>
+            {
+                "01/08/2026 UPI/CR/621397903960/ARVIND K/SBIN/**87098@OKSBI/UPI 330.00 -29,86,644.43"
+            };
+
+            var doc = _parser.ParseLines(lines, profile);
+
+            Assert.Single(doc.Transactions);
+            var t = doc.Transactions[0];
+            Assert.Equal("ARVIND K", t.CleanEntityName);
+            Assert.Equal("621397903960", t.ReferenceNumber);
         }
 
         [Fact]
