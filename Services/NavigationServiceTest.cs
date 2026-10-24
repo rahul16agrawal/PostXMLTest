@@ -1,5 +1,4 @@
 using System;
-using System.Windows.Controls;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,7 +9,6 @@ using Postaze.Repositories;
 using Postaze.Services;
 using PostXML.Services;
 using PostXML.ViewModels;
-using PostXML.Views;
 using Xunit;
 
 namespace PostXMLTest.Services
@@ -28,6 +26,8 @@ namespace PostXMLTest.Services
             services.AddSingleton(loggerFactory.CreateLogger<DashboardViewModel>());
 
             var repoMock = new Mock<ICustomerRepository>();
+            var profileMock = new Mock<IProfileService>();
+            var sessionMock = new Mock<ICustomerSessionService>();
             var features = new PostazeSoftwareFeatures
             {
                 ApplicationName = "PostXML",
@@ -40,6 +40,8 @@ namespace PostXMLTest.Services
             configMock.Setup(c => c.Value).Returns(new CustomerDefaultConfig());
 
             services.AddSingleton(repoMock.Object);
+            services.AddSingleton(profileMock.Object);
+            services.AddSingleton(sessionMock.Object);
             services.AddSingleton(featuresMock.Object);
             services.AddSingleton(configMock.Object);
 

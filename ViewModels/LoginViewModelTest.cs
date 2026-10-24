@@ -9,6 +9,8 @@ using Postaze.Configurations;
 using Postaze.Models;
 using Postaze.Repositories;
 using Postaze.Services;
+using PostXML.Models;
+using PostXML.Services;
 using PostXML.ViewModels;
 using Xunit;
 
@@ -27,11 +29,13 @@ namespace PostXMLTest.ViewModels
             return secure;
         }
 
-        private static (LoginViewModel ViewModel, Mock<INavigationService> NavMock, Mock<ICustomerRepository> RepoMock, Mock<ILogger<LoginViewModel>> LoggerMock) CreateViewModel()
+        private static (LoginViewModel ViewModel, Mock<INavigationService> NavMock, Mock<ICustomerRepository> RepoMock, Mock<IProfileService> ProfileMock, Mock<ICustomerSessionService> SessionMock) CreateViewModel()
         {
             var navMock = new Mock<INavigationService>();
             var repoMock = new Mock<ICustomerRepository>();
             var loggerMock = new Mock<ILogger<LoginViewModel>>();
+            var profileMock = new Mock<IProfileService>();
+            var sessionMock = new Mock<ICustomerSessionService>();
             var featuresMock = new Mock<IOptions<PostazeSoftwareFeatures>>();
 
             featuresMock.Setup(f => f.Value).Returns(new PostazeSoftwareFeatures
@@ -40,15 +44,24 @@ namespace PostXMLTest.ViewModels
                 ApplicationTagLine = "From Bank Statement to Tally XML in Seconds"
             });
 
-            var vm = new LoginViewModel(navMock.Object, repoMock.Object, featuresMock.Object, loggerMock.Object);
-            return (vm, navMock, repoMock, loggerMock);
+            sessionMock.SetupProperty(s => s.Token, "test_bearer_token");
+
+            var vm = new LoginViewModel(
+                navMock.Object,
+                repoMock.Object,
+                featuresMock.Object,
+                loggerMock.Object,
+                profileMock.Object,
+                sessionMock.Object);
+
+            return (vm, navMock, repoMock, profileMock, sessionMock);
         }
 
         [Fact]
-        public async Task LoginCommand_WithValidCredentials_NavigatesToDashboardAndInitializesCustomer()
+        public async Task LoginCommand_WithValidCredentials_NavigatesToDashboardAndSavesProfile()
         {
             // Arrange
-            var (vm, navMock, repoMock, _) = CreateViewModel();
+            var (vm, navMock, repoMock, profileMock, _) = CreateViewModel();
             var customer = new Customer
             {
                 CustomerId = 42,
@@ -68,6 +81,7 @@ namespace PostXMLTest.ViewModels
 
             // Assert
             navMock.Verify(n => n.NavigateTo<DashboardViewModel>(It.IsAny<Action<DashboardViewModel>>()), Times.Once);
+            profileMock.Verify(p => p.SaveProfileAsync(It.Is<UserAppStateProfile>(prof => prof.PostazeId == "WHOL42" && prof.AuthToken == "test_bearer_token")), Times.Once);
             vm.IsProcessing.Should().BeFalse();
         }
 
@@ -75,7 +89,7 @@ namespace PostXMLTest.ViewModels
         public async Task LoginCommand_WithInvalidCredentials_ShowsErrorAndDoesNotNavigate()
         {
             // Arrange
-            var (vm, navMock, repoMock, _) = CreateViewModel();
+            var (vm, navMock, repoMock, profileMock, _) = CreateViewModel();
 
             repoMock.Setup(r => r.AuthenticateCustomerAsync("badUser", It.IsAny<SecureString>()))
                 .ReturnsAsync((Customer?)null);
@@ -88,6 +102,7 @@ namespace PostXMLTest.ViewModels
 
             // Assert
             navMock.Verify(n => n.NavigateTo<DashboardViewModel>(It.IsAny<Action<DashboardViewModel>>()), Times.Never);
+            profileMock.Verify(p => p.SaveProfileAsync(It.IsAny<UserAppStateProfile>()), Times.Never);
             vm.LoginFeedbackMessage.Should().NotBeNullOrWhiteSpace();
             vm.IsProcessing.Should().BeFalse();
         }
@@ -96,7 +111,7 @@ namespace PostXMLTest.ViewModels
         public async Task LoginCommand_WhenRepositoryThrowsException_SetsFeedbackMessageAndResetsProcessing()
         {
             // Arrange
-            var (vm, navMock, repoMock, _) = CreateViewModel();
+            var (vm, navMock, repoMock, _, _) = CreateViewModel();
 
             repoMock.Setup(r => r.AuthenticateCustomerAsync(It.IsAny<string>(), It.IsAny<SecureString>()))
                 .ThrowsAsync(new InvalidOperationException("API connection failure"));
@@ -117,7 +132,7 @@ namespace PostXMLTest.ViewModels
         public async Task LoginCommand_WhenNavigationThrowsException_HandlesGracefullyAndSetsFeedback()
         {
             // Arrange
-            var (vm, navMock, repoMock, _) = CreateViewModel();
+            var (vm, navMock, repoMock, _, _) = CreateViewModel();
             var customer = new Customer
             {
                 CustomerId = 1,
@@ -147,7 +162,7 @@ namespace PostXMLTest.ViewModels
         public void NavigateToRegisterCommand_Executes_NavigatesToRegisterViewModel()
         {
             // Arrange
-            var (vm, navMock, _, _) = CreateViewModel();
+            var (vm, navMock, _, _, _) = CreateViewModel();
 
             // Act
             vm.NavigateToRegisterViewUserControlCommand.Execute(null);
@@ -160,7 +175,7 @@ namespace PostXMLTest.ViewModels
         public void Username_And_Password_PropertyChanges_NotifyCorrectly()
         {
             // Arrange
-            var (vm, _, _, _) = CreateViewModel();
+            var (vm, _, _, _, _) = CreateViewModel();
             string? changedProperty = null;
             vm.PropertyChanged += (sender, args) => changedProperty = args.PropertyName;
 

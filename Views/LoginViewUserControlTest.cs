@@ -5,6 +5,7 @@ using Moq;
 using Postaze.Configurations;
 using Postaze.Repositories;
 using Postaze.Services;
+using PostXML.Services;
 using PostXML.ViewModels;
 using PostXML.Views;
 using Xunit;
@@ -20,6 +21,8 @@ namespace PostXMLTest.Views
             var navMock = new Mock<INavigationService>();
             var repoMock = new Mock<ICustomerRepository>();
             var loggerMock = new Mock<ILogger<LoginViewModel>>();
+            var profileMock = new Mock<IProfileService>();
+            var sessionMock = new Mock<ICustomerSessionService>();
             var featuresMock = new Mock<IOptions<PostazeSoftwareFeatures>>();
             featuresMock.Setup(f => f.Value).Returns(new PostazeSoftwareFeatures
             {
@@ -27,7 +30,13 @@ namespace PostXMLTest.Views
                 ApplicationTagLine = "Tagline"
             });
 
-            var vm = new LoginViewModel(navMock.Object, repoMock.Object, featuresMock.Object, loggerMock.Object);
+            var vm = new LoginViewModel(
+                navMock.Object,
+                repoMock.Object,
+                featuresMock.Object,
+                loggerMock.Object,
+                profileMock.Object,
+                sessionMock.Object);
 
             // Act
             var view = new LoginViewUserControl(vm);
