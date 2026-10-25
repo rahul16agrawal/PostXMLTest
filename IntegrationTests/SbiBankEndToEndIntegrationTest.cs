@@ -6,24 +6,50 @@ using Microsoft.Extensions.Logging.Abstractions;
 using PostXML.Models;
 using PostXML.Services;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace PostXMLTest.IntegrationTests
 {
     public class SbiBankEndToEndIntegrationTest
     {
+        private readonly ITestOutputHelper? _output;
         private readonly IBankProfileRegistry _registry;
         private readonly IBankDetectorService _detector;
         private readonly IMathReconciliationEngine _reconciliationEngine;
         private readonly IBankStatementParser _parser;
         private readonly ITallyXmlExportService _exportService;
 
-        public SbiBankEndToEndIntegrationTest()
+        public SbiBankEndToEndIntegrationTest(ITestOutputHelper? output = null)
         {
+            _output = output;
             _registry = new BankProfileRegistry(NullLogger<BankProfileRegistry>.Instance);
             _detector = new BankDetectorService(NullLogger<BankDetectorService>.Instance, _registry);
             _reconciliationEngine = new MathReconciliationEngine(NullLogger<MathReconciliationEngine>.Instance);
             _parser = new BankStatementParser(_detector, _reconciliationEngine, NullLogger<BankStatementParser>.Instance);
             _exportService = new TallyXmlExportService(NullLogger<TallyXmlExportService>.Instance);
+        }
+
+        [Fact]
+        public void SbiBank_Print_LineByLine_Reconciliation()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "SBIBank", "SBIBank_Statement_001.pdf");
+
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                doc = _parser.ParsePdf(stream, "72218191");
+            }
+
+            _output?.WriteLine($"| Row | Date | Description | Debit (Dr) | Credit (Cr) | Bank Balance | Engine Balance | Status |");
+            _output?.WriteLine($"|---|---|---|---|---|---|---|---|");
+
+            foreach (var txn in doc.Transactions)
+            {
+                string status = txn.IsBalanceMatched ? "MATCHED" : "MISMATCH";
+                string desc = txn.RawNarration.Length > 35 ? txn.RawNarration.Substring(0, 32) + "..." : txn.RawNarration;
+                _output?.WriteLine($"| {txn.RowIndex:D2} | {txn.TransactionDate:dd-MMM-yyyy} | {desc} | {txn.WithdrawalAmount:N2} | {txn.DepositAmount:N2} | {txn.RunningBalance:N2} | {txn.CalculatedBalance:N2} | {status} |");
+            }
         }
 
         [Fact]
@@ -66,9 +92,17 @@ namespace PostXMLTest.IntegrationTests
             Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
             Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
 
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
             // 5. Assert Key Transactions
             // Row 1: Test transfer TO CIAANNSIR8
             var row1 = doc.Transactions[0];
+            Assert.Equal(new DateTime(2026, 7, 1), row1.TransactionDate);
             Assert.Equal(TransactionType.Withdrawal, row1.Type);
             Assert.Equal(1.00m, row1.WithdrawalAmount);
             Assert.Equal(0m, row1.DepositAmount);
@@ -76,6 +110,7 @@ namespace PostXMLTest.IntegrationTests
 
             // Row 2: DEBIT limit utilisation 6,88,000.00
             var row2 = doc.Transactions[1];
+            Assert.Equal(new DateTime(2026, 7, 1), row2.TransactionDate);
             Assert.Equal(TransactionType.Withdrawal, row2.Type);
             Assert.Equal(688000.00m, row2.WithdrawalAmount);
             Assert.Equal(0m, row2.DepositAmount);
@@ -83,6 +118,7 @@ namespace PostXMLTest.IntegrationTests
 
             // Row 3: BY TRANSFER IMPS 4,400.00
             var row3 = doc.Transactions[2];
+            Assert.Equal(new DateTime(2026, 7, 1), row3.TransactionDate);
             Assert.Equal(TransactionType.Deposit, row3.Type);
             Assert.Equal(4400.00m, row3.DepositAmount);
             Assert.Equal(0m, row3.WithdrawalAmount);
@@ -90,6 +126,7 @@ namespace PostXMLTest.IntegrationTests
 
             // Final Row 90: BY TRANSFER NEFT 650.00
             var row90 = doc.Transactions[89];
+            Assert.Equal(new DateTime(2026, 9, 23), row90.TransactionDate);
             Assert.Equal(TransactionType.Deposit, row90.Type);
             Assert.Equal(650.00m, row90.DepositAmount);
             Assert.Equal(0m, row90.WithdrawalAmount);
