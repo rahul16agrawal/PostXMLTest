@@ -142,5 +142,84 @@ namespace PostXMLTest.Services
             var act = () => _service.GenerateTallyXml(statement, "   ");
             act.Should().Throw<ArgumentException>();
         }
+
+        [Fact]
+        public void GenerateTallyXml_BankLedger_OmitsOpeningBalanceNode()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "State Bank of India",
+                OpeningBalance = 45514.24m,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 4, 1),
+                        DepositAmount = 1000m,
+                        TargetLedgerName = "Sales Account",
+                        Type = TransactionType.Deposit
+                    }
+                }
+            };
+
+            string xml = _service.GenerateTallyXml(statement, "SBI");
+
+            var xdoc = System.Xml.Linq.XDocument.Parse(xml);
+            var bankLedger = xdoc.Descendants("LEDGER").FirstOrDefault(l => (string?)l.Attribute("NAME") == "SBI");
+            bankLedger.Should().NotBeNull();
+            bankLedger!.Element("OPENINGBALANCE").Should().BeNull();
+        }
+
+        [Fact]
+        public void GenerateTallyXml_WithCustomBankLedgerName_UsesCustomNameAcrossMasterAndVouchers()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "Canara Bank",
+                OpeningBalance = -3054604.43m,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 8, 1),
+                        WithdrawalAmount = 500m,
+                        TargetLedgerName = "Office Expenses",
+                        Type = TransactionType.Withdrawal
+                    },
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 8, 2),
+                        DepositAmount = 1500m,
+                        TargetLedgerName = "Client Inflow",
+                        Type = TransactionType.Deposit
+                    }
+                }
+            };
+
+            string customLedgerName = "Canara Bank OD A/c";
+            string xml = _service.GenerateTallyXml(statement, customLedgerName);
+
+            var xdoc = System.Xml.Linq.XDocument.Parse(xml);
+            
+            // Verify Bank Ledger Master uses custom name and has no opening balance
+            var bankLedger = xdoc.Descendants("LEDGER").FirstOrDefault(l => (string?)l.Attribute("NAME") == customLedgerName);
+            bankLedger.Should().NotBeNull();
+            bankLedger!.Element("PARENT")!.Value.Should().Be("Bank Accounts");
+            bankLedger!.Element("OPENINGBALANCE").Should().BeNull();
+
+            var vouchers = xdoc.Descendants("VOUCHER").ToList();
+            
+            // Payment voucher: Bank ledger is in entries, party is target ledger
+            var pmtVoucher = vouchers.First(v => (string?)v.Element("VOUCHERTYPENAME") == "Payment");
+            pmtVoucher.Element("PARTYLEDGERNAME")!.Value.Should().Be("Office Expenses");
+            var pmtBankEntry = pmtVoucher.Descendants("ALLLEDGERENTRIES.LIST").FirstOrDefault(e => (string?)e.Element("LEDGERNAME") == customLedgerName);
+            pmtBankEntry.Should().NotBeNull();
+
+            // Receipt voucher: Party is the bank ledger
+            var rcptVoucher = vouchers.First(v => (string?)v.Element("VOUCHERTYPENAME") == "Receipt");
+            rcptVoucher.Element("PARTYLEDGERNAME")!.Value.Should().Be(customLedgerName);
+            var rcptBankEntry = rcptVoucher.Descendants("ALLLEDGERENTRIES.LIST").FirstOrDefault(e => (string?)e.Element("LEDGERNAME") == customLedgerName);
+            rcptBankEntry.Should().NotBeNull();
+        }
     }
 }

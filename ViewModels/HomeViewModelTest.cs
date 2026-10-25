@@ -353,9 +353,47 @@ namespace PostXMLTest.ViewModels
         }
 
         [Fact]
+        public async Task ExportTallyXmlAsync_WithCustomBankLedgerName_PassesCustomNameToExportService()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"tally_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var doc = new StatementDocument
+                {
+                    BankName = "Canara Bank",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 200m, Type = TransactionType.Withdrawal }
+                    }
+                };
+
+                _viewModel.CurrentDocument = doc;
+                _viewModel.Transactions.Add(doc.Transactions[0]);
+                _viewModel.BankLedgerName = "Canara Bank OD A/c";
+
+                _fileDialogMock
+                    .Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()))
+                    .Returns(tempOut);
+
+                _tallyXmlExportMock
+                    .Setup(t => t.GenerateTallyXml(doc, "Canara Bank OD A/c", "Default Company"))
+                    .Returns("<ENVELOPE><BODY>CUSTOM_LEDGER_XML</BODY></ENVELOPE>");
+
+                await _viewModel.ExportTallyXmlAsync();
+
+                _tallyXmlExportMock.Verify(t => t.GenerateTallyXml(doc, "Canara Bank OD A/c", "Default Company"), Times.Once);
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        [Fact]
         public void ClearStatement_ResetsAllFields()
         {
             _viewModel.CurrentDocument = new StatementDocument();
+            _viewModel.BankLedgerName = "Test Bank";
             _viewModel.Transactions.Add(new BankTransaction());
             _viewModel.IsStatementLoaded = true;
             _viewModel.SelectedStatementFilePath = "statement.pdf";
@@ -364,6 +402,7 @@ namespace PostXMLTest.ViewModels
             _viewModel.ClearStatement();
 
             _viewModel.CurrentDocument.Should().BeNull();
+            _viewModel.BankLedgerName.Should().BeEmpty();
             _viewModel.Transactions.Should().BeEmpty();
             _viewModel.IsStatementLoaded.Should().BeFalse();
             _viewModel.SelectedStatementFilePath.Should().BeEmpty();
@@ -407,6 +446,148 @@ namespace PostXMLTest.ViewModels
             finally
             {
                 if (File.Exists(tempPdf)) File.Delete(tempPdf);
+            }
+        }
+
+        [Fact]
+        public void OpenExportDialog_WhenStatementLoaded_SetsIsExportDialogOpen_LeavesBankLedgerEmpty()
+        {
+            var doc = new StatementDocument
+            {
+                BankName = "Kotak Mahindra Bank",
+                Transactions = new List<BankTransaction> { new() { RowIndex = 1 } }
+            };
+            _viewModel.CurrentDocument = doc;
+            _viewModel.Transactions.Add(doc.Transactions[0]);
+            _viewModel.BankLedgerName = string.Empty;
+
+            _viewModel.OpenExportDialog();
+
+            _viewModel.IsExportDialogOpen.Should().BeTrue();
+            _viewModel.BankLedgerName.Should().BeEmpty(); // Must always be explicitly entered by user
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenBankLedgerEmpty_SetsErrorMessage_AndDoesNotExport()
+        {
+            var doc = new StatementDocument
+            {
+                BankName = "HDFC Bank",
+                Transactions = new List<BankTransaction> { new() { RowIndex = 1 } }
+            };
+            _viewModel.CurrentDocument = doc;
+            _viewModel.Transactions.Add(doc.Transactions[0]);
+            _viewModel.BankLedgerName = "   "; // Whitespace / empty
+            _viewModel.IsExportDialogOpen = true;
+
+            await _viewModel.ConfirmExportAsync();
+
+            _viewModel.HasExportDialogError.Should().BeTrue();
+            _viewModel.ExportDialogErrorMessage.Should().Contain("Please enter the Bank Account Ledger Name (Tally)");
+            _viewModel.IsExportDialogOpen.Should().BeTrue(); // Dialog remains open
+
+            _fileDialogMock.Verify(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()), Times.Never);
+            _fileDialogMock.Verify(d => d.SaveExcelFileDialog(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void CloseExportDialog_ResetsIsExportDialogOpen()
+        {
+            _viewModel.IsExportDialogOpen = true;
+            _viewModel.CloseExportDialog();
+            _viewModel.IsExportDialogOpen.Should().BeFalse();
+        }
+
+        [Fact]
+        public void FormatToggling_XmlAndExcel_AreMutuallyExclusive()
+        {
+            _viewModel.IsXmlFormat.Should().BeTrue();
+            _viewModel.IsExcelFormat.Should().BeFalse();
+
+            _viewModel.IsExcelFormat = true;
+            _viewModel.IsExcelFormat.Should().BeTrue();
+            _viewModel.IsXmlFormat.Should().BeFalse();
+
+            _viewModel.IsXmlFormat = true;
+            _viewModel.IsXmlFormat.Should().BeTrue();
+            _viewModel.IsExcelFormat.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenExcelSelected_ExportsExcelAndClosesDialog()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"excel_export_{Guid.NewGuid():N}.xlsx");
+            try
+            {
+                var doc = new StatementDocument
+                {
+                    BankName = "Canara Bank",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 500m, Type = TransactionType.Deposit }
+                    }
+                };
+
+                _viewModel.CurrentDocument = doc;
+                _viewModel.Transactions.Add(doc.Transactions[0]);
+                _viewModel.BankLedgerName = "Canara Bank Current A/c";
+                _viewModel.IsExcelFormat = true;
+                _viewModel.IsExportDialogOpen = true;
+
+                _fileDialogMock
+                    .Setup(d => d.SaveExcelFileDialog(It.IsAny<string>()))
+                    .Returns(tempOut);
+
+                await _viewModel.ConfirmExportAsync();
+
+                _viewModel.IsExportDialogOpen.Should().BeFalse();
+                _viewModel.SuccessMessage.Should().Contain("Excel spreadsheet exported successfully");
+                File.Exists(tempOut).Should().BeTrue();
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenXmlSelected_ExportsXmlAndClosesDialog()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"xml_export_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var doc = new StatementDocument
+                {
+                    BankName = "State Bank of India",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 100m, Type = TransactionType.Withdrawal }
+                    }
+                };
+
+                _viewModel.CurrentDocument = doc;
+                _viewModel.Transactions.Add(doc.Transactions[0]);
+                _viewModel.BankLedgerName = "SBI";
+                _viewModel.IsXmlFormat = true;
+                _viewModel.IsExportDialogOpen = true;
+
+                _fileDialogMock
+                    .Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()))
+                    .Returns(tempOut);
+
+                _tallyXmlExportMock
+                    .Setup(t => t.GenerateTallyXml(doc, "SBI", "Default Company"))
+                    .Returns("<ENVELOPE>SBI_XML</ENVELOPE>");
+
+                await _viewModel.ConfirmExportAsync();
+
+                _viewModel.IsExportDialogOpen.Should().BeFalse();
+                _viewModel.SuccessMessage.Should().Contain("Tally XML voucher exported successfully");
+                File.ReadAllText(tempOut).Should().Contain("SBI_XML");
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
             }
         }
     }

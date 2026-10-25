@@ -100,6 +100,11 @@ namespace PostXMLTest.IntegrationTests
             Assert.Equal(586, receiptCount);
             Assert.Equal(97, paymentCount);
 
+            // Assert Bank Ledger Master definition
+            var canaraLedger = xdoc.Descendants("LEDGER").FirstOrDefault(l => (string?)l.Attribute("NAME") == "Canara Bank");
+            Assert.NotNull(canaraLedger);
+            Assert.Null(canaraLedger!.Element("OPENINGBALANCE"));
+
             // 7. Verify Gold Master Conformance
             var goldDoc = XDocument.Parse(File.ReadAllText(goldXmlPath));
             var goldVouchers = goldDoc.Descendants("VOUCHER").ToList();
