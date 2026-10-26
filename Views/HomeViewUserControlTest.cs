@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -24,21 +27,7 @@ namespace PostXMLTest.Views
         [WpfFact]
         public void ParameterizedConstructor_SetsDataContext()
         {
-            var parserMock = new Mock<IBankStatementParser>();
-            var tallyXmlMock = new Mock<ITallyXmlExportService>();
-            var reconciliationMock = new Mock<IMathReconciliationEngine>();
-            var fileDialogMock = new Mock<IFileDialogService>();
-            var dispatcherMock = new Mock<IWinDispatcherService>();
-            var loggerMock = new Mock<ILogger<HomeViewModel>>();
-
-            var vm = new HomeViewModel(
-                parserMock.Object,
-                tallyXmlMock.Object,
-                reconciliationMock.Object,
-                fileDialogMock.Object,
-                dispatcherMock.Object,
-                loggerMock.Object);
-
+            var vm = CreateTestViewModel();
             var view = new HomeViewUserControl(vm);
 
             view.Should().NotBeNull();
@@ -55,8 +44,149 @@ namespace PostXMLTest.Views
         [WpfFact]
         public void HomeViewUserControl_WithLoadedTransactions_MeasuresAndRendersWithoutCultureNotFoundException()
         {
-            // Verifies that neither summary cards nor DataGrid columns throw CultureNotFoundException
-            // due to quotes in ConverterCulture bindings
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            var act = () =>
+            {
+                view.Measure(new Size(1024, 768));
+                view.Arrange(new Rect(0, 0, 1024, 768));
+                view.UpdateLayout();
+            };
+
+            act.Should().NotThrow();
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_WhenStatementLoaded_RendersSplitTwoSectionSummaryHeader()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var texts = textBlocks.Select(t => t.Text).ToList();
+
+            // Right section 2x2 grid headers must all exist
+            texts.Should().Contain("Opening Balance");
+            texts.Should().Contain("Closing Balance");
+            texts.Should().Contain("Total Inflow (Cr)");
+            texts.Should().Contain("Total Outflow (Dr)");
+
+            // Left section bank info must exist
+            texts.Should().Contain("Canara Bank");
+            texts.Should().Contain("A/c: 1234567890");
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_ReconciliationNotes_HasWrappingConfigured()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var notesBlock = textBlocks.FirstOrDefault(t => t.TextWrapping == TextWrapping.Wrap && t.LineHeight == 16);
+
+            notesBlock.Should().NotBeNull("Reconciliation notes must have wrapping and line-height configured for breathing room");
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_FeedbackMessages_HaveToolTipsConfigured()
+        {
+            var vm = CreateTestViewModel();
+            vm.IsStatementLoaded = true;
+            vm.SuccessMessage = "Tally XML voucher exported successfully to Canara_Bank_Tally.xml";
+            vm.ErrorMessage = "Sample validation error";
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var successBlock = textBlocks.FirstOrDefault(t => t.Text == vm.SuccessMessage);
+            var actionErrorBlock = textBlocks.FirstOrDefault(t => t.Text == vm.ErrorMessage && t.TextTrimming == TextTrimming.CharacterEllipsis);
+
+            successBlock.Should().NotBeNull();
+            successBlock!.ToolTip.Should().NotBeNull();
+
+            actionErrorBlock.Should().NotBeNull();
+            actionErrorBlock!.ToolTip.Should().NotBeNull();
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_ActionBar_HasUnifiedColorCodedButtons_AndNoAutoMapButton()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var buttons = FindVisualChildren<Button>(view).ToList();
+            var buttonTexts = buttons.Select(b => b.Content?.ToString() ?? string.Empty).ToList();
+
+            // Auto-Map Ledgers button must be removed
+            buttonTexts.Should().NotContain(t => t.Contains("Auto-Map Ledgers", StringComparison.OrdinalIgnoreCase));
+
+            // Upload New File and Export buttons must be present
+            buttonTexts.Should().Contain(t => t.Contains("Upload New File", StringComparison.OrdinalIgnoreCase));
+            buttonTexts.Should().Contain(t => t.Contains("Export", StringComparison.OrdinalIgnoreCase));
+        }
+
+        [WpfTheory]
+        [InlineData(800, 600)]
+        [InlineData(980, 700)]
+        [InlineData(1280, 800)]
+        [InlineData(1920, 1080)]
+        public void HomeViewUserControl_DifferentWindowResolutions_MeasuresAndArrangesWithoutThrowing(double width, double height)
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            var act = () =>
+            {
+                view.Measure(new Size(width, height));
+                view.Arrange(new Rect(0, 0, width, height));
+                view.UpdateLayout();
+            };
+
+            act.Should().NotThrow();
+        }
+
+        private static HomeViewModel CreateTestViewModel()
+        {
             var parserMock = new Mock<IBankStatementParser>();
             var tallyXmlMock = new Mock<ITallyXmlExportService>();
             var reconciliationMock = new Mock<IMathReconciliationEngine>();
@@ -64,15 +194,18 @@ namespace PostXMLTest.Views
             var dispatcherMock = new Mock<IWinDispatcherService>();
             var loggerMock = new Mock<ILogger<HomeViewModel>>();
 
-            var vm = new HomeViewModel(
+            return new HomeViewModel(
                 parserMock.Object,
                 tallyXmlMock.Object,
                 reconciliationMock.Object,
                 fileDialogMock.Object,
                 dispatcherMock.Object,
                 loggerMock.Object);
+        }
 
-            var doc = new StatementDocument
+        private static StatementDocument CreateSampleDocument()
+        {
+            return new StatementDocument
             {
                 BankName = "Canara Bank",
                 AccountNumber = "1234567890",
@@ -80,6 +213,12 @@ namespace PostXMLTest.Views
                 TotalDeposits = 12871997.78m,
                 TotalWithdrawals = 13532139.16m,
                 ClosingBalance = -3714745.81m,
+                Reconciliation = new ReconciliationSummary
+                {
+                    IsFullyReconciled = true,
+                    ExpectedClosingBalance = -3714745.81m,
+                    ActualClosingBalance = -3714745.81m
+                },
                 Transactions = new List<BankTransaction>
                 {
                     new BankTransaction
@@ -96,20 +235,26 @@ namespace PostXMLTest.Views
                     }
                 }
             };
+        }
 
-            vm.CurrentDocument = doc;
-            vm.Transactions.Add(doc.Transactions[0]);
-            vm.IsStatementLoaded = true;
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject? depObj) where T : DependencyObject
+        {
+            if (depObj == null) yield break;
 
-            var view = new HomeViewUserControl(vm);
-            var act = () =>
+            int count = VisualTreeHelper.GetChildrenCount(depObj);
+            for (int i = 0; i < count; i++)
             {
-                view.Measure(new Size(1024, 768));
-                view.Arrange(new Rect(0, 0, 1024, 768));
-                view.UpdateLayout();
-            };
+                var child = VisualTreeHelper.GetChild(depObj, i);
+                if (child is T t)
+                {
+                    yield return t;
+                }
 
-            act.Should().NotThrow();
+                foreach (var childOfChild in FindVisualChildren<T>(child))
+                {
+                    yield return childOfChild;
+                }
+            }
         }
     }
 }
