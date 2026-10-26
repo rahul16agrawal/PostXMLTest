@@ -286,5 +286,55 @@ namespace PostXMLTest.Services
             _mockDetector.Verify(d => d.DetectBank(It.IsAny<string>()), Times.Once);
             _mockReconciliationEngine.Verify(r => r.Reconcile(It.IsAny<StatementDocument>()), Times.Once);
         }
+
+        [Fact]
+        public void ParsePdf_RealHdfcStatement_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Statement_002.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var detector = new BankDetectorService(detectorLogger);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream);
+
+            Assert.NotNull(doc);
+            Assert.Equal("HDFC Bank", doc.BankName);
+            Assert.Equal("50200037586423", doc.AccountNumber);
+            Assert.Equal(162, doc.Transactions.Count);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+        }
+
+        [Fact]
+        public void ParsePdf_RealHdfcHanumanStatement_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Statement_003.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var detector = new BankDetectorService(detectorLogger);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream);
+
+            Assert.NotNull(doc);
+            Assert.Equal("HDFC Bank", doc.BankName);
+            Assert.Equal("50200075012327", doc.AccountNumber);
+            Assert.Equal(1001, doc.Transactions.Count);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+        }
     }
 }
