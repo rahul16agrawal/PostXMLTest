@@ -445,5 +445,26 @@ namespace PostXMLTest.Services
             Assert.Equal("CUSTOM-ACCT-999", doc.AccountNumber);
             mockCustomParser.Verify(p => p.Parse(It.IsAny<PdfDocument>(), It.IsAny<BankProfile>(), It.IsAny<List<string>>()), Times.Once);
         }
+
+        [Fact]
+        public void ParsePdf_MultiPageDocument_PopulatesTotalPagesOnStatementDocument()
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+
+            _mockDetector
+                .Setup(d => d.DetectBank(It.IsAny<string>()))
+                .Returns(new BankProfile { BankCode = "GENERIC", DisplayName = "MultiPage Bank" });
+
+            var doc = _parser.ParsePdf(ms);
+
+            Assert.NotNull(doc);
+            Assert.Equal(3, doc.TotalPages);
+        }
     }
 }

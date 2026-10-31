@@ -777,6 +777,150 @@ namespace PostXMLTest.ViewModels
             }
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public async Task LoadStatementFileAsync_WhenFilePathIsNullOrWhitespace_SetsErrorMessage(string? invalidPath)
+        {
+            await _viewModel.LoadStatementFileAsync(invalidPath!);
+
+            _viewModel.ErrorMessage.Should().Be("Selected statement file does not exist or cannot be accessed.");
+            _viewModel.IsProcessing.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task LoadStatementFileAsync_WhenFileNotFound_SetsErrorMessage()
+        {
+            string nonExistentPath = Path.Combine(Path.GetTempPath(), $"missing_file_{Guid.NewGuid():N}.pdf");
+
+            await _viewModel.LoadStatementFileAsync(nonExistentPath);
+
+            _viewModel.ErrorMessage.Should().Be("Selected statement file does not exist or cannot be accessed.");
+            _viewModel.IsProcessing.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_TelemetryDispatch_HandlesNullAndShortAccountNumbersGracefully()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"telemetry_short_acc_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    new Mock<IExcelExportService>().Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                // Document with short account number (<= 8 chars) and TotalPages = 0
+                var doc = new StatementDocument
+                {
+                    BankName = "ICICI Bank",
+                    AccountNumber = "12345",
+                    TotalPages = 0, // Should default to 1
+                    Reconciliation = null!,
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 500m, Type = TransactionType.Deposit }
+                    }
+                };
+
+                vm.CurrentDocument = doc;
+                vm.Transactions.Add(doc.Transactions[0]);
+                vm.BankLedgerName = "ICICI Bank";
+                vm.IsXmlFormat = true;
+                vm.IsExportDialogOpen = true;
+
+                _fileDialogMock.Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempOut);
+                _tallyXmlExportMock.Setup(t => t.GenerateTallyXml(doc, "ICICI Bank", "Default Company")).Returns("<XML />");
+
+                await vm.ConfirmExportAsync();
+                await Task.Delay(100);
+
+                billingMock.Verify(b => b.ReportStatementConvertedAsync(
+                    It.Is<StatementConversionTelemetry>(t =>
+                        t.PageCount == 1 &&
+                        t.AccountNumberMasked == "12345" &&
+                        t.IsReconciled == false),
+                    It.IsAny<CancellationToken>()), Times.Once);
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenBillingServiceThrowsException_DoesNotFailExport()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"telemetry_fail_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new InvalidOperationException("Telemetry endpoint offline"));
+
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    new Mock<IExcelExportService>().Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                var doc = new StatementDocument
+                {
+                    BankName = "SBI",
+                    AccountNumber = "1234567890",
+                    TotalPages = 2,
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 200m, Type = TransactionType.Withdrawal }
+                    }
+                };
+
+                vm.CurrentDocument = doc;
+                vm.Transactions.Add(doc.Transactions[0]);
+                vm.BankLedgerName = "SBI";
+                vm.IsXmlFormat = true;
+                vm.IsExportDialogOpen = true;
+
+                _fileDialogMock.Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempOut);
+                _tallyXmlExportMock.Setup(t => t.GenerateTallyXml(doc, "SBI", "Default Company")).Returns("<XML />");
+
+                // Export should succeed despite telemetry background exception
+                await vm.ConfirmExportAsync();
+
+                vm.SuccessMessage.Should().Contain("Tally XML voucher exported successfully");
+                File.Exists(tempOut).Should().BeTrue();
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        [Fact]
+        public void EnsureLedgerAvailable_WhenNullOrWhitespace_DoesNotAdd()
+        {
+            int initialCount = _viewModel.AvailableLedgers.Count;
+
+            // Invoking with null, empty, whitespace
+            _viewModel.BankLedgerName = "   ";
+            _viewModel.AvailableLedgers.Should().HaveCount(initialCount);
+        }
+
         #endregion
     }
 }

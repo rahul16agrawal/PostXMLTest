@@ -610,6 +610,102 @@ namespace PostXMLTest.ViewModels
             _viewModel.UpgradeButtonText.Should().Be("Renew Plan");
         }
 
+        [Fact]
+        public void QuotaInfo_WhenNull_PropertiesReturnDefaultsWithoutException()
+        {
+            _viewModel.UpdateQuotaState(null!);
+
+            _viewModel.PagesConvertedDisplay.Should().Be("0 pages");
+            _viewModel.PageAllowanceDisplay.Should().Be("0 / 100 pages (Fair Use)");
+            _viewModel.PageUsagePercent.Should().Be(0.0);
+            _viewModel.PageProgressBrushHex.Should().Be("#38BDF8");
+            _viewModel.CanUpgrade.Should().BeTrue();
+            _viewModel.UpgradeButtonText.Should().Be("Upgrade Plan");
+        }
+
+        [Fact]
+        public void PageProgressBrushHex_WhenConversionNotAllowed_ReturnsDangerRed()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                IsConversionAllowed = false,
+                PagesConvertedPeriod = 10,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "active"
+            };
+
+            _viewModel.UpdateQuotaState(quota);
+
+            _viewModel.PageProgressBrushHex.Should().Be("#EF4444");
+        }
+
+        [Fact]
+        public async Task RefreshSubscriptionCommand_WhenBillingServiceThrowsException_SetsErrorFeedback()
+        {
+            var mockBilling = new Mock<IPostXmlBillingService>();
+            mockBilling.Setup(b => b.RefreshQuotaAsync(It.IsAny<System.Threading.CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("API unreachable"));
+
+            var vm = new ProfileViewModel(
+                _mockRepo.Object,
+                _mockLogger.Object,
+                _mockDispatcher.Object,
+                _mockProfileService.Object,
+                _mockSessionService.Object,
+                _mockNavService.Object,
+                _mockTerminationService.Object,
+                _mockGstinService.Object,
+                mockBilling.Object
+            );
+
+            await vm.RefreshSubscriptionCommand.ExecuteAsync(null);
+
+            vm.SubscriptionFeedbackMessage.Should().Be("Could not refresh subscription status.");
+            vm.IsSubscriptionBusy.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RefreshSubscriptionCommand_WhenBillingServiceReturnsNull_SetsUpToDateFeedback()
+        {
+            var mockBilling = new Mock<IPostXmlBillingService>();
+            mockBilling.Setup(b => b.RefreshQuotaAsync(It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync((AccountQuotaInfo?)null);
+
+            var vm = new ProfileViewModel(
+                _mockRepo.Object,
+                _mockLogger.Object,
+                _mockDispatcher.Object,
+                _mockProfileService.Object,
+                _mockSessionService.Object,
+                _mockNavService.Object,
+                _mockTerminationService.Object,
+                _mockGstinService.Object,
+                mockBilling.Object
+            );
+
+            await vm.RefreshSubscriptionCommand.ExecuteAsync(null);
+
+            vm.SubscriptionFeedbackMessage.Should().Be("Plan details up to date.");
+        }
+
+        [Fact]
+        public void Initialize_WhenCustomerMobilesAndGstinAreNull_DoesNotThrow()
+        {
+            var customer = new Customer
+            {
+                CustomerId = 101,
+                Gstin = null!,
+                Mobiles = null!,
+                GstinDetails = null
+            };
+
+            Action act = () => _viewModel.Initialize(customer);
+
+            act.Should().NotThrow();
+            _viewModel.RegisteredMobiles.Should().BeEmpty();
+            _viewModel.HasRegisteredMobiles.Should().BeFalse();
+        }
+
         #endregion
     }
 }

@@ -242,6 +242,147 @@ namespace PostXMLTest.Models
             quota.PageQuotaLimit.Should().Be(1250);
         }
 
+        [Fact]
+        public void Status_Property_SetsSubscriptionStatus_WhenNonEmpty_AndIgnoresNullOrWhitespace()
+        {
+            var quota = new AccountQuotaInfo { SubscriptionStatus = "trialing" };
+
+            // Setting valid status updates SubscriptionStatus
+            quota.Status = "active";
+            quota.SubscriptionStatus.Should().Be("active");
+            quota.Status.Should().Be("active");
+
+            // Setting null does not overwrite existing status
+            quota.Status = null;
+            quota.SubscriptionStatus.Should().Be("active");
+
+            // Setting whitespace does not overwrite existing status
+            quota.Status = "   ";
+            quota.SubscriptionStatus.Should().Be("active");
+        }
+
+        [Fact]
+        public void SubscriptionStatus_WhenNull_DisplayStatusAndStatusColorHexDoNotThrow()
+        {
+            var quota = new AccountQuotaInfo { SubscriptionStatus = null! };
+
+            // Should safely evaluate without NullReferenceException
+            quota.DisplayStatus.Should().Be("ACTIVE");
+            quota.StatusColorHex.Should().Be("#6B7280");
+        }
+
+        [Theory]
+        [InlineData("paused", "PAUSED", "#F59E0B")]
+        [InlineData("past_due", "PAST DUE", "#F59E0B")]
+        [InlineData("cancelled", "CANCELLED", "#EF4444")]
+        [InlineData("halted", "HALTED", "#EF4444")]
+        [InlineData("custom_enterprise", "CUSTOM_ENTERPRISE", "#6B7280")]
+        public void DisplayStatus_And_StatusColorHex_HandleAllStatuses(string statusInput, string expectedDisplay, string expectedColor)
+        {
+            var quota = new AccountQuotaInfo
+            {
+                SubscriptionStatus = statusInput,
+                DaysRemaining = 60
+            };
+
+            quota.DisplayStatus.Should().Be(expectedDisplay);
+            quota.StatusColorHex.Should().Be(expectedColor);
+        }
+
+        [Fact]
+        public void PaidPlanCode_OverridesTrialingStatus_ToActive()
+        {
+            // Plan code indicates paid quarterly package, but status is trialing
+            var quota = new AccountQuotaInfo
+            {
+                PlanCode = "li_postxml_3m_saver",
+                SubscriptionStatus = "trialing",
+                DaysRemaining = 90
+            };
+
+            quota.DisplayStatus.Should().Be("ACTIVE");
+            quota.StatusColorHex.Should().Be("#10B981");
+
+            // With null PlanCode
+            quota.PlanCode = null!;
+            quota.DisplayStatus.Should().Be("FREE TRIAL");
+            quota.StatusColorHex.Should().Be("#38BDF8");
+
+            // With Free Trial PlanCode
+            quota.PlanCode = "free_trial";
+            quota.DisplayStatus.Should().Be("FREE TRIAL");
+            quota.StatusColorHex.Should().Be("#38BDF8");
+        }
+
+        [Fact]
+        public void ServerIsExpired_ExplicitlyOverridesCalculatedExpiry()
+        {
+            // Future expiry, but server says is_expired = true
+            var quota1 = new AccountQuotaInfo
+            {
+                ExpiresAt = DateTime.UtcNow.AddDays(30),
+                ServerIsExpired = true
+            };
+            quota1.IsExpired.Should().BeTrue();
+            quota1.DisplayStatus.Should().Be("EXPIRED");
+
+            // Past expiry, but server says is_expired = false (grace period)
+            var quota2 = new AccountQuotaInfo
+            {
+                ExpiresAt = DateTime.UtcNow.AddDays(-5),
+                ServerIsExpired = false
+            };
+            quota2.IsExpired.Should().BeFalse();
+        }
+
+        [Fact]
+        public void CanConvert_EdgeCases_ZeroAndNegativeLimits()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                IsConversionAllowed = true,
+                SubscriptionStatus = "active"
+            };
+
+            // Zero limit treated as unlimited
+            quota.PageQuotaLimit = 0;
+            quota.PagesConvertedPeriod = 1000;
+            quota.CanConvert.Should().BeTrue();
+
+            // Negative limit treated as unlimited
+            quota.PageQuotaLimit = -1;
+            quota.PagesConvertedPeriod = 500;
+            quota.CanConvert.Should().BeTrue();
+
+            // Exact limit reached
+            quota.PageQuotaLimit = 500;
+            quota.PagesConvertedPeriod = 500;
+            quota.CanConvert.Should().BeFalse();
+        }
+
+        [Fact]
+        public void CanRenew_And_RenewalCtaText_HonorsExplicitServerOverrides()
+        {
+            // Server explicitly says not renewal eligible even on trial
+            var quota1 = new AccountQuotaInfo
+            {
+                SubscriptionStatus = "trialing",
+                IsRenewalEligible = false
+            };
+            quota1.CanRenew.Should().BeFalse();
+
+            // Server explicitly says renewal eligible even with 200 days left
+            var quota2 = new AccountQuotaInfo
+            {
+                SubscriptionStatus = "active",
+                DaysRemaining = 200,
+                IsRenewalEligible = true,
+                RenewalCtaText = "Switch to Annual Saver"
+            };
+            quota2.CanRenew.Should().BeTrue();
+            quota2.EffectiveRenewalCtaText.Should().Be("Switch to Annual Saver");
+        }
+
         #endregion
     }
 }

@@ -210,5 +210,194 @@ namespace PostXMLTest.Services
 
             success.Should().BeFalse();
         }
+
+        #region Edge Cases, Nulls & Exception Handling
+
+        [Fact]
+        public void Constructor_NullHttpClientFactory_ThrowsArgumentNullException()
+        {
+            Action act = () => new PostXmlBillingService(null!, NullLogger<PostXmlBillingService>.Instance);
+            act.Should().Throw<ArgumentNullException>().WithParameterName("httpClientFactory");
+        }
+
+        [Fact]
+        public void Constructor_NullLogger_ThrowsArgumentNullException()
+        {
+            Action act = () => new PostXmlBillingService(_mockFactory.Object, null!);
+            act.Should().Throw<ArgumentNullException>().WithParameterName("logger");
+        }
+
+        [Fact]
+        public async Task RefreshQuotaAsync_WhenNetworkThrowsHttpRequestException_ReturnsCachedQuotaGracefully()
+        {
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new HttpRequestException("DNS resolution failed"));
+
+            var result = await _billingService.RefreshQuotaAsync();
+
+            result.Should().NotBeNull();
+            result!.PlanCode.Should().Be("free_trial");
+        }
+
+        [Fact]
+        public async Task RefreshQuotaAsync_WhenRequestTimesOut_ReturnsCachedQuotaGracefully()
+        {
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new TaskCanceledException("Request timed out"));
+
+            var result = await _billingService.RefreshQuotaAsync();
+
+            result.Should().NotBeNull();
+            result!.PlanCode.Should().Be("free_trial");
+        }
+
+        [Fact]
+        public async Task RefreshQuotaAsync_WhenResponseContainsHtmlErrorPage_ReturnsCachedQuotaWithoutThrowing()
+        {
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.BadGateway)
+                {
+                    Content = new StringContent("<html><body>502 Bad Gateway</body></html>")
+                });
+
+            var result = await _billingService.RefreshQuotaAsync();
+
+            result.Should().NotBeNull();
+            result!.PlanCode.Should().Be("free_trial");
+        }
+
+        [Fact]
+        public async Task RefreshQuotaAsync_WhenRootObjectDirectlyContainsQuotaWithoutDataWrapper_ParsesCorrectly()
+        {
+            string directJson = """
+            {
+                "plan_code": "li_postxml_6m_value",
+                "plan_name": "Half Year Value",
+                "status": "active",
+                "pages_converted_total": 210,
+                "pages_converted_period": 210,
+                "page_quota_limit": 2500
+            }
+            """;
+
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(directJson)
+                });
+
+            var result = await _billingService.RefreshQuotaAsync();
+
+            result.Should().NotBeNull();
+            result!.PlanCode.Should().Be("li_postxml_6m_value");
+            result.DisplayStatus.Should().Be("ACTIVE");
+            result.PagesConvertedTotal.Should().Be(210);
+            result.PageQuotaLimit.Should().Be(2500);
+        }
+
+        [Fact]
+        public async Task CreateCheckoutSessionAsync_WhenDirectCheckoutUrlAtRoot_ReturnsUrl()
+        {
+            string json = """
+            {
+                "checkout_url": "https://postaze.com/direct/checkout"
+            }
+            """;
+
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json)
+                });
+
+            var url = await _billingService.CreateCheckoutSessionAsync();
+
+            url.Should().Be("https://postaze.com/direct/checkout");
+        }
+
+        [Fact]
+        public async Task CreateCheckoutSessionAsync_WhenNetworkThrowsException_ReturnsFallbackUrl()
+        {
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+            var url = await _billingService.CreateCheckoutSessionAsync();
+
+            url.Should().Be("https://postaze.com/postxml/upgrade");
+        }
+
+        [Fact]
+        public async Task ReportStatementConvertedAsync_WhenNetworkThrowsException_ReturnsFalseGracefully()
+        {
+            var telemetry = new StatementConversionTelemetry { BankCode = "AXIS", PageCount = 2 };
+
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new HttpRequestException("Server disconnected"));
+
+            bool success = await _billingService.ReportStatementConvertedAsync(telemetry);
+
+            success.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ReportStatementConvertedAsync_WhenResponseDataHasNonIntegerValues_DoesNotCrash()
+        {
+            var telemetry = new StatementConversionTelemetry { BankCode = "KOTAK", PageCount = 1 };
+
+            string json = """
+            {
+                "status": "success",
+                "data": {
+                    "pages_converted_total": "invalid_string",
+                    "pages_converted_period": null
+                }
+            }
+            """;
+
+            _mockHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json)
+                });
+
+            bool success = await _billingService.ReportStatementConvertedAsync(telemetry);
+
+            // Should succeed without throwing unhandled deserialization or type cast exception
+            success.Should().BeTrue();
+        }
+
+        #endregion
     }
 }
