@@ -205,6 +205,43 @@ namespace PostXMLTest.Models
             quota.CanConvert.Should().BeTrue();
         }
 
+        [Fact]
+        public void Deserialization_FromBackendQuotaStatusResponse_PopulatesActiveStatus()
+        {
+            string json = """
+            {
+                "customer_id": 100021,
+                "plan_code": "li_postxml_3m_saver",
+                "plan_name": "Quarterly Saver (3 Months)",
+                "status": "active",
+                "starts_at": "2026-10-31T19:26:22+00:00",
+                "expires_at": "2027-02-14T19:26:22+00:00",
+                "days_remaining": 105,
+                "is_expired": false,
+                "is_renewal_eligible": false,
+                "renewal_cta_text": null,
+                "pages_converted_total": 85,
+                "pages_converted_period": 85,
+                "page_quota_limit": 1250,
+                "is_conversion_allowed": true
+            }
+            """;
+
+            var quota = System.Text.Json.JsonSerializer.Deserialize<AccountQuotaInfo>(json);
+
+            quota.Should().NotBeNull();
+            quota!.PlanCode.Should().Be("li_postxml_3m_saver");
+            quota.PlanName.Should().Be("Quarterly Saver (3 Months)");
+            quota.SubscriptionStatus.Should().Be("active");
+            quota.DisplayStatus.Should().Be("ACTIVE");
+            quota.StatusColorHex.Should().Be("#10B981");
+            quota.IsExpired.Should().BeFalse();
+            quota.CanConvert.Should().BeTrue();
+            quota.DaysRemaining.Should().Be(105);
+            quota.PagesConvertedTotal.Should().Be(85);
+            quota.PageQuotaLimit.Should().Be(1250);
+        }
+
         #endregion
     }
 }
