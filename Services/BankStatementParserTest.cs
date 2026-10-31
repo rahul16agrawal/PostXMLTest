@@ -5,6 +5,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using PostXML.Models;
 using PostXML.Services;
+using PostXML.Services.Parsers;
+using UglyToad.PdfPig;
 using UglyToad.PdfPig.Writer;
 using Xunit;
 
@@ -335,6 +337,113 @@ namespace PostXMLTest.Services
             Assert.Equal("50200075012327", doc.AccountNumber);
             Assert.Equal(1001, doc.Transactions.Count);
             Assert.True(doc.Reconciliation.IsFullyReconciled);
+        }
+
+        [Fact]
+        public void ParsePdf_WithBankCodeOverride_BypassesAutoDetectAndUsesOverriddenProfile()
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+
+            var axisProfile = new BankProfile { BankCode = "AXIS", DisplayName = "Axis Bank" };
+            _mockDetector
+                .Setup(d => d.GetProfileByCode("AXIS"))
+                .Returns(axisProfile);
+
+            var doc = _parser.ParsePdf(ms, password: null, bankCodeOverride: "AXIS");
+
+            Assert.NotNull(doc);
+            Assert.Equal("Axis Bank", doc.BankName);
+            _mockDetector.Verify(d => d.DetectBank(It.IsAny<string>()), Times.Never);
+            _mockDetector.Verify(d => d.GetProfileByCode("AXIS"), Times.Once);
+            _mockReconciliationEngine.Verify(r => r.Reconcile(It.IsAny<StatementDocument>()), Times.Once);
+        }
+
+        [Fact]
+        public void ParsePdf_WithUnknownBankCodeOverride_CreatesFallbackProfileAndBypassesDetector()
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+
+            _mockDetector
+                .Setup(d => d.GetProfileByCode("UNKNOWN_COOP"))
+                .Returns((BankProfile?)null);
+
+            var doc = _parser.ParsePdf(ms, password: null, bankCodeOverride: "UNKNOWN_COOP");
+
+            Assert.NotNull(doc);
+            Assert.Equal("UNKNOWN_COOP", doc.BankName);
+            _mockDetector.Verify(d => d.DetectBank(It.IsAny<string>()), Times.Never);
+            _mockDetector.Verify(d => d.GetProfileByCode("UNKNOWN_COOP"), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("\t")]
+        public void ParsePdf_WithNullOrWhitespaceBankCodeOverride_FallsBackToDetectBank(string? bankCodeOverride)
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+
+            _mockDetector
+                .Setup(d => d.DetectBank(It.IsAny<string>()))
+                .Returns(new BankProfile { BankCode = "GENERIC", DisplayName = "Standard Bank Statement" });
+
+            var doc = _parser.ParsePdf(ms, password: null, bankCodeOverride: bankCodeOverride);
+
+            Assert.NotNull(doc);
+            Assert.Equal("Standard Bank Statement", doc.BankName);
+            _mockDetector.Verify(d => d.DetectBank(It.IsAny<string>()), Times.Once);
+            _mockDetector.Verify(d => d.GetProfileByCode(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public void ParsePdf_WithBankOverride_DelegatesToRegisteredCustomBankParser()
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+
+            var mockCustomParser = new Mock<IBankPdfParser>();
+            mockCustomParser.SetupGet(p => p.SupportedBankCode).Returns("CUSTOM_BANK");
+            mockCustomParser
+                .Setup(p => p.Parse(It.IsAny<PdfDocument>(), It.IsAny<BankProfile>(), It.IsAny<List<string>>()))
+                .Returns(new StatementDocument
+                {
+                    BankName = "Delegated Custom Bank",
+                    AccountNumber = "CUSTOM-ACCT-999"
+                });
+
+            var customProfile = new BankProfile { BankCode = "CUSTOM_BANK", DisplayName = "Delegated Custom Bank" };
+            _mockDetector
+                .Setup(d => d.GetProfileByCode("CUSTOM_BANK"))
+                .Returns(customProfile);
+
+            var parserWithCustom = new BankStatementParser(
+                _mockDetector.Object,
+                _mockReconciliationEngine.Object,
+                _mockLogger.Object,
+                new[] { mockCustomParser.Object });
+
+            var doc = parserWithCustom.ParsePdf(ms, password: null, bankCodeOverride: "CUSTOM_BANK");
+
+            Assert.NotNull(doc);
+            Assert.Equal("Delegated Custom Bank", doc.BankName);
+            Assert.Equal("CUSTOM-ACCT-999", doc.AccountNumber);
+            mockCustomParser.Verify(p => p.Parse(It.IsAny<PdfDocument>(), It.IsAny<BankProfile>(), It.IsAny<List<string>>()), Times.Once);
         }
     }
 }

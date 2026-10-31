@@ -115,5 +115,59 @@ namespace PostXMLTest.Services
             Assert.NotNull(profile);
             Assert.Equal("GENERIC", profile.BankCode);
         }
+
+        [Theory]
+        [InlineData("HDFC", "HDFC Bank")]
+        [InlineData("hdfc", "HDFC Bank")]
+        [InlineData("Hdfc", "HDFC Bank")]
+        [InlineData("SBI", "State Bank of India")]
+        [InlineData("sbi", "State Bank of India")]
+        [InlineData("AXIS", "Axis Bank")]
+        [InlineData("axis", "Axis Bank")]
+        [InlineData("KOTAK", "Kotak Mahindra Bank")]
+        [InlineData("kotak", "Kotak Mahindra Bank")]
+        [InlineData("IDBI", "IDBI Bank")]
+        [InlineData("IOB", "Indian Overseas Bank")]
+        public void GetProfileByCode_WithValidCode_ReturnsMatchingProfileCaseInsensitively(string bankCode, string expectedDisplayName)
+        {
+            var profile = _detector.GetProfileByCode(bankCode);
+
+            Assert.NotNull(profile);
+            Assert.Equal(expectedDisplayName, profile!.DisplayName);
+            Assert.Equal(bankCode, profile.BankCode, ignoreCase: true);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("\t")]
+        public void GetProfileByCode_WithNullOrWhitespace_ReturnsNull(string? bankCode)
+        {
+            var profile = _detector.GetProfileByCode(bankCode!);
+            Assert.Null(profile);
+        }
+
+        [Fact]
+        public void GetProfileByCode_WithUnknownCode_ReturnsNull()
+        {
+            var profile = _detector.GetProfileByCode("NON_EXISTENT_BANK");
+            Assert.Null(profile);
+        }
+
+        [Fact]
+        public void SupportedProfiles_ContainsAllMajorBanksAndIsNonEmpty()
+        {
+            var profiles = _detector.SupportedProfiles;
+
+            Assert.NotNull(profiles);
+            Assert.NotEmpty(profiles);
+            Assert.Contains(profiles, p => p.BankCode == "HDFC");
+            Assert.Contains(profiles, p => p.BankCode == "SBI");
+            Assert.Contains(profiles, p => p.BankCode == "AXIS");
+            Assert.Contains(profiles, p => p.BankCode == "KOTAK");
+            Assert.Contains(profiles, p => p.BankCode == "IDBI");
+            Assert.Contains(profiles, p => p.BankCode == "IOB");
+        }
     }
 }
