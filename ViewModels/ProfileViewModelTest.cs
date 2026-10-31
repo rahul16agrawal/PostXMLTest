@@ -493,5 +493,123 @@ namespace PostXMLTest.ViewModels
         }
 
         #endregion
+
+        #region PostXML Page Quota & Upgrade Telemetry
+
+        [Fact]
+        public void PageConversionBindings_ReflectQuotaInfoCorrectly()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                PagesConvertedTotal = 428,
+                PagesConvertedPeriod = 428,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "active"
+            };
+
+            _viewModel.UpdateQuotaState(quota);
+
+            _viewModel.PagesConvertedDisplay.Should().Be("428 pages");
+            _viewModel.PageAllowanceDisplay.Should().Be("428 / 5,000 pages (Fair Use)");
+            _viewModel.PageUsagePercent.Should().BeApproximately(8.56, 0.01);
+            _viewModel.PageProgressBrushHex.Should().Be("#38BDF8"); // Normal
+        }
+
+        [Fact]
+        public void PageProgressBrushHex_ReflectsThresholds()
+        {
+            // Warning at >= 80%
+            var warningQuota = new AccountQuotaInfo
+            {
+                PagesConvertedPeriod = 4200,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "active"
+            };
+            _viewModel.UpdateQuotaState(warningQuota);
+            _viewModel.PageProgressBrushHex.Should().Be("#F59E0B");
+
+            // Exceeded at >= 100%
+            var exceededQuota = new AccountQuotaInfo
+            {
+                PagesConvertedPeriod = 5000,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "active"
+            };
+            _viewModel.UpdateQuotaState(exceededQuota);
+            _viewModel.PageProgressBrushHex.Should().Be("#EF4444");
+
+            // Expired
+            var expiredQuota = new AccountQuotaInfo
+            {
+                PagesConvertedPeriod = 100,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "expired"
+            };
+            _viewModel.UpdateQuotaState(expiredQuota);
+            _viewModel.PageProgressBrushHex.Should().Be("#EF4444");
+        }
+
+        [Fact]
+        public async Task RefreshSubscriptionCommand_WithBillingService_UpdatesQuota()
+        {
+            var mockBilling = new Mock<IPostXmlBillingService>();
+            var freshQuota = new AccountQuotaInfo
+            {
+                PlanCode = "li_postxml_12m_super",
+                PlanName = "Yearly Super Saver",
+                PagesConvertedTotal = 500,
+                SubscriptionStatus = "active"
+            };
+            mockBilling.Setup(b => b.RefreshQuotaAsync(It.IsAny<System.Threading.CancellationToken>()))
+                .ReturnsAsync(freshQuota);
+
+            var vm = new ProfileViewModel(
+                _mockRepo.Object,
+                _mockLogger.Object,
+                _mockDispatcher.Object,
+                _mockProfileService.Object,
+                _mockSessionService.Object,
+                _mockNavService.Object,
+                _mockTerminationService.Object,
+                _mockGstinService.Object,
+                mockBilling.Object
+            );
+
+            await vm.RefreshSubscriptionCommand.ExecuteAsync(null);
+
+            vm.QuotaInfo.Should().BeSameAs(freshQuota);
+            vm.PlanDisplayName.Should().Be("Yearly Super Saver");
+            vm.PagesConvertedDisplay.Should().Be("500 pages");
+            vm.SubscriptionFeedbackMessage.Should().Be("Plan details up to date.");
+        }
+
+        [Fact]
+        public void CanUpgrade_And_UpgradeButtonText_ReflectsSubscriptionState()
+        {
+            // Free Trial
+            var trialQuota = new AccountQuotaInfo { SubscriptionStatus = "trialing", DaysRemaining = 12 };
+            _viewModel.UpdateQuotaState(trialQuota);
+            _viewModel.CanUpgrade.Should().BeTrue();
+            _viewModel.UpgradeButtonText.Should().Be("Upgrade Plan");
+
+            // Active, > 30 days remaining (not eligible for renewal yet)
+            var activeQuota = new AccountQuotaInfo { SubscriptionStatus = "active", DaysRemaining = 120 };
+            _viewModel.UpdateQuotaState(activeQuota);
+            _viewModel.CanUpgrade.Should().BeFalse();
+
+            // Active, <= 30 days remaining (eligible for renewal)
+            var renewingQuota = new AccountQuotaInfo { SubscriptionStatus = "active", DaysRemaining = 25 };
+            _viewModel.UpdateQuotaState(renewingQuota);
+            _viewModel.CanUpgrade.Should().BeTrue();
+            _viewModel.UpgradeButtonText.Should().Be("Renew Plan");
+
+            // Expired
+            var expiredQuota = new AccountQuotaInfo { SubscriptionStatus = "expired", DaysRemaining = 0 };
+            _viewModel.UpdateQuotaState(expiredQuota);
+            _viewModel.CanUpgrade.Should().BeTrue();
+            _viewModel.UpgradeButtonText.Should().Be("Renew Plan");
+        }
+
+        #endregion
     }
 }

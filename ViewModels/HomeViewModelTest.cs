@@ -678,5 +678,105 @@ namespace PostXMLTest.ViewModels
                 if (File.Exists(tempPdf)) File.Delete(tempPdf);
             }
         }
+
+        #region Telemetry & Page Tracking
+
+        [Fact]
+        public async Task LoadStatementFileAsync_ComputesSha256FileHash()
+        {
+            string tempPdf = Path.GetTempFileName();
+            try
+            {
+                byte[] bytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x31, 0x32, 0x33 };
+                File.WriteAllBytes(tempPdf, bytes);
+
+                var doc = new StatementDocument
+                {
+                    BankName = "HDFC Bank",
+                    TotalPages = 3,
+                    Transactions = new List<BankTransaction>()
+                };
+
+                _parserMock.Setup(p => p.ParsePdf(It.IsAny<Stream>(), null)).Returns(doc);
+
+                await _viewModel.LoadStatementFileAsync(tempPdf);
+
+                _viewModel.CurrentDocument.Should().NotBeNull();
+                _viewModel.CurrentDocument!.FileHashSha256.Should().NotBeNullOrWhiteSpace();
+                _viewModel.CurrentDocument.FileHashSha256!.Length.Should().Be(64); // 64 hex chars
+            }
+            finally
+            {
+                if (File.Exists(tempPdf)) File.Delete(tempPdf);
+            }
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenBillingServicePresent_DispatchesConversionTelemetry()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"telemetry_export_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                var excelMock = new Mock<IExcelExportService>();
+                var detectorMock = new Mock<IBankDetectorService>();
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    excelMock.Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    detectorMock.Object,
+                    billingMock.Object
+                );
+
+                var doc = new StatementDocument
+                {
+                    BankName = "HDFC Bank",
+                    AccountNumber = "50200037586423",
+                    TotalPages = 4,
+                    FileHashSha256 = "dummyhash456",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 1000m, Type = TransactionType.Deposit }
+                    }
+                };
+
+                vm.CurrentDocument = doc;
+                vm.Transactions.Add(doc.Transactions[0]);
+                vm.BankLedgerName = "HDFC Bank A/c";
+                vm.IsXmlFormat = true;
+                vm.IsExportDialogOpen = true;
+
+                _fileDialogMock
+                    .Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()))
+                    .Returns(tempOut);
+
+                _tallyXmlExportMock
+                    .Setup(t => t.GenerateTallyXml(doc, "HDFC Bank A/c", "Default Company"))
+                    .Returns("<ENVELOPE>TELEMETRY</ENVELOPE>");
+
+                await vm.ConfirmExportAsync();
+
+                // Wait briefly for fire-and-forget telemetry task
+                await Task.Delay(100);
+
+                billingMock.Verify(b => b.ReportStatementConvertedAsync(
+                    It.Is<StatementConversionTelemetry>(t =>
+                        t.PageCount == 4 &&
+                        t.AccountNumberMasked.Contains("XXXX") &&
+                        t.ExportFormat == "XML" &&
+                        t.FileHashSha256 == "dummyhash456"),
+                    It.IsAny<CancellationToken>()), Times.Once);
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        #endregion
     }
 }

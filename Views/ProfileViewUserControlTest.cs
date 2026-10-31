@@ -52,5 +52,65 @@ namespace PostXMLTest.Views
             view.Should().NotBeNull();
             view.DataContext.Should().Be(vm);
         }
+
+        [WpfFact]
+        public void ProfileView_Card2_DisplaysPageConversionElements()
+        {
+            var repoMock = new Mock<ICustomerRepository>();
+            var loggerMock = new Mock<ILogger<ProfileViewModel>>();
+            var dispatcherMock = new Mock<IWinDispatcherService>();
+            dispatcherMock.Setup(d => d.InvokeAsync(It.IsAny<Func<Task>>()))
+                .Returns<Func<Task>>(action => action());
+
+            var vm = new ProfileViewModel(
+                repoMock.Object,
+                loggerMock.Object,
+                dispatcherMock.Object
+            );
+
+            vm.UpdateQuotaState(new PostXML.Models.AccountQuotaInfo
+            {
+                PagesConvertedTotal = 150,
+                PagesConvertedPeriod = 150,
+                PageQuotaLimit = 5000,
+                SubscriptionStatus = "active"
+            });
+
+            var view = new ProfileViewUserControl(vm);
+            view.Measure(new System.Windows.Size(1200, 800));
+            view.Arrange(new System.Windows.Rect(0, 0, 1200, 800));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<System.Windows.Controls.TextBlock>(view);
+            var pagesConvertedText = System.Linq.Enumerable.FirstOrDefault(textBlocks, tb =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(tb) == "Profile_TxtPagesConverted");
+            pagesConvertedText.Should().NotBeNull();
+            pagesConvertedText!.Text.Should().Be("150 pages");
+
+            var allowanceText = System.Linq.Enumerable.FirstOrDefault(textBlocks, tb =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(tb) == "Profile_TxtPageAllowance");
+            allowanceText.Should().NotBeNull();
+            allowanceText!.Text.Should().Be("150 / 5,000 pages (Fair Use)");
+        }
+
+        private static System.Collections.Generic.IEnumerable<T> FindVisualChildren<T>(System.Windows.DependencyObject? depObj) where T : System.Windows.DependencyObject
+        {
+            if (depObj == null) yield break;
+
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(depObj);
+            for (int i = 0; i < count; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(depObj, i);
+                if (child is T t)
+                {
+                    yield return t;
+                }
+
+                foreach (var childOfChild in FindVisualChildren<T>(child))
+                {
+                    yield return childOfChild;
+                }
+            }
+        }
     }
 }

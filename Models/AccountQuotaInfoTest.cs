@@ -104,5 +104,107 @@ namespace PostXMLTest.Models
             plan.PriceMonthlyInr.Should().Be(499);
             plan.StorageQuotaDisplay.Should().Be("50 GB");
         }
+
+        #region PostXML Page Conversion Quota Tests
+
+        [Fact]
+        public void PageConversionDefaults_AreCorrect()
+        {
+            var quota = new AccountQuotaInfo();
+
+            quota.PagesConvertedTotal.Should().Be(0);
+            quota.PagesConvertedPeriod.Should().Be(0);
+            quota.PageQuotaLimit.Should().Be(100);
+            quota.IsConversionAllowed.Should().BeTrue();
+            quota.PageUsagePercentage.Should().Be(0.0);
+            quota.PageUsageDisplay.Should().Be("0 / 100 pages");
+            quota.PagesConvertedDisplay.Should().Be("0 pages");
+            quota.PageAllowanceDisplay.Should().Be("0 / 100 pages (Fair Use)");
+            quota.CanConvert.Should().BeTrue();
+        }
+
+        [Fact]
+        public void PageUsagePercentage_CalculatesAndCapsAt100()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                PageQuotaLimit = 5000,
+                PagesConvertedPeriod = 2500
+            };
+
+            quota.PageUsagePercentage.Should().Be(50.0);
+
+            // Exceeded limit capped at 100%
+            quota.PagesConvertedPeriod = 6000;
+            quota.PageUsagePercentage.Should().Be(100.0);
+
+            // Zero limit handles division gracefully
+            quota.PageQuotaLimit = 0;
+            quota.PageUsagePercentage.Should().Be(0.0);
+        }
+
+        [Fact]
+        public void CanConvert_ReflectsQuotaLimitAndExpiration()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                PageQuotaLimit = 100,
+                PagesConvertedPeriod = 99,
+                IsConversionAllowed = true,
+                SubscriptionStatus = "active"
+            };
+
+            quota.CanConvert.Should().BeTrue();
+
+            // When period reaches or exceeds limit
+            quota.PagesConvertedPeriod = 100;
+            quota.CanConvert.Should().BeFalse();
+
+            quota.PagesConvertedPeriod = 105;
+            quota.CanConvert.Should().BeFalse();
+
+            // When explicitly disallowed
+            quota.PagesConvertedPeriod = 50;
+            quota.IsConversionAllowed = false;
+            quota.CanConvert.Should().BeFalse();
+
+            // When subscription expired
+            quota.IsConversionAllowed = true;
+            quota.SubscriptionStatus = "expired";
+            quota.CanConvert.Should().BeFalse();
+        }
+
+        [Fact]
+        public void Deserialization_FromJson_PopulatesPageConversionFields()
+        {
+            string json = """
+            {
+                "plan_code": "li_postxml_12m_super",
+                "plan_name": "Yearly Super Saver",
+                "subscription_status": "active",
+                "pages_converted_total": 428,
+                "pages_converted_period": 428,
+                "page_quota_limit": 5000,
+                "is_conversion_allowed": true,
+                "days_remaining": 365
+            }
+            """;
+
+            var quota = System.Text.Json.JsonSerializer.Deserialize<AccountQuotaInfo>(json);
+
+            quota.Should().NotBeNull();
+            quota!.PlanCode.Should().Be("li_postxml_12m_super");
+            quota.PlanName.Should().Be("Yearly Super Saver");
+            quota.PagesConvertedTotal.Should().Be(428);
+            quota.PagesConvertedPeriod.Should().Be(428);
+            quota.PageQuotaLimit.Should().Be(5000);
+            quota.IsConversionAllowed.Should().BeTrue();
+            quota.PagesConvertedDisplay.Should().Be("428 pages");
+            quota.PageAllowanceDisplay.Should().Be("428 / 5,000 pages (Fair Use)");
+            quota.PageUsagePercentage.Should().BeApproximately(8.56, 0.01);
+            quota.CanConvert.Should().BeTrue();
+        }
+
+        #endregion
     }
 }
