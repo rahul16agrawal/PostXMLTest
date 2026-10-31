@@ -119,6 +119,52 @@ namespace PostXMLTest.Views
         }
 
         [WpfFact]
+        public void HomeViewUserControl_FinancialMetricCards_HaveBolderBorders()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var openingLabel = textBlocks.FirstOrDefault(t => t.Text == "Opening Balance");
+            openingLabel.Should().NotBeNull();
+
+            var parentBorder = FindVisualParent<Border>(openingLabel!);
+            parentBorder.Should().NotBeNull();
+            parentBorder!.BorderThickness.Should().Be(new Thickness(1.5));
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_ParticularsColumn_HasMinimumWidthConfigured()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var dataGrids = FindVisualChildren<DataGrid>(view).ToList();
+            var dataGrid = dataGrids.FirstOrDefault();
+            dataGrid.Should().NotBeNull();
+
+            var narrationCol = dataGrid!.Columns.FirstOrDefault(c => (string)c.Header == "Particulars / Narration");
+            narrationCol.Should().NotBeNull();
+            narrationCol!.MinWidth.Should().Be(220);
+        }
+
+        [WpfFact]
         public void Render_HomeViewUserControl_Preview_Image()
         {
             var vm = CreateTestViewModel();
@@ -293,6 +339,17 @@ namespace PostXMLTest.Views
                     }
                 }
             };
+        }
+
+        private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+        {
+            while (child != null)
+            {
+                var parent = VisualTreeHelper.GetParent(child);
+                if (parent is T t) return t;
+                child = parent;
+            }
+            return null;
         }
 
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject? depObj) where T : DependencyObject
