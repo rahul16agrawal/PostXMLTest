@@ -590,5 +590,93 @@ namespace PostXMLTest.ViewModels
                 if (File.Exists(tempOut)) File.Delete(tempOut);
             }
         }
+
+        [Fact]
+        public void AvailableBanks_IsInitializedWithSupportedBanks()
+        {
+            _viewModel.AvailableBanks.Should().NotBeEmpty();
+            _viewModel.AvailableBanks.Select(b => b.DisplayName).Should().Contain(new[] { "HDFC Bank", "Axis Bank", "State Bank of India", "Kotak Mahindra Bank" });
+        }
+
+        [Fact]
+        public async Task LoadStatementFileAsync_AutoSelectsMatchingBank()
+        {
+            string tempPdf = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllBytes(tempPdf, new byte[] { 0x25, 0x50, 0x44, 0x46 });
+                var doc = new StatementDocument
+                {
+                    BankName = "Axis Bank",
+                    AccountNumber = "924020049955809",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, RunningBalance = 1000m }
+                    }
+                };
+
+                _parserMock.Setup(p => p.ParsePdf(It.IsAny<Stream>(), null)).Returns(doc);
+
+                await _viewModel.LoadStatementFileAsync(tempPdf);
+
+                _viewModel.SelectedBank.Should().NotBeNull();
+                _viewModel.SelectedBank!.DisplayName.Should().Be("Axis Bank");
+                _viewModel.SelectedBank.BankCode.Should().Be("AXIS");
+            }
+            finally
+            {
+                if (File.Exists(tempPdf)) File.Delete(tempPdf);
+            }
+        }
+
+        [Fact]
+        public async Task SelectedBank_ChangedByUser_TriggersReParsingWithBankOverride()
+        {
+            string tempPdf = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllBytes(tempPdf, new byte[] { 0x25, 0x50, 0x44, 0x46 });
+                var initialDoc = new StatementDocument
+                {
+                    BankName = "Axis Bank",
+                    AccountNumber = "924020049955809",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, RunningBalance = 1000m }
+                    }
+                };
+
+                var overriddenDoc = new StatementDocument
+                {
+                    BankName = "HDFC Bank",
+                    AccountNumber = "50200075012327",
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, RunningBalance = 2000m }
+                    }
+                };
+
+                _parserMock.Setup(p => p.ParsePdf(It.IsAny<Stream>(), null)).Returns(initialDoc);
+                _parserMock.Setup(p => p.ParsePdf(It.IsAny<Stream>(), It.IsAny<string>(), "HDFC")).Returns(overriddenDoc);
+
+                await _viewModel.LoadStatementFileAsync(tempPdf);
+                _viewModel.SelectedBank!.BankCode.Should().Be("AXIS");
+
+                // User manually switches to HDFC
+                var hdfcOption = _viewModel.AvailableBanks.First(b => b.BankCode == "HDFC");
+                _viewModel.SelectedBank = hdfcOption;
+
+                // Allow async Task triggered by OnSelectedBankChanged to execute
+                await Task.Delay(100);
+
+                _parserMock.Verify(p => p.ParsePdf(It.IsAny<Stream>(), It.IsAny<string>(), "HDFC"), Times.Once);
+                _viewModel.CurrentDocument!.BankName.Should().Be("HDFC Bank");
+                _viewModel.CurrentDocument.AccountNumber.Should().Be("50200075012327");
+            }
+            finally
+            {
+                if (File.Exists(tempPdf)) File.Delete(tempPdf);
+            }
+        }
     }
 }

@@ -92,6 +92,64 @@ namespace PostXMLTest.Views
         }
 
         [WpfFact]
+        public void HomeViewUserControl_AccountNumberAndBankSelector_HaveMatchingFontSizeAndWeight()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var accBlock = textBlocks.FirstOrDefault(t => t.Text == "A/c: 1234567890");
+            accBlock.Should().NotBeNull();
+            accBlock!.FontSize.Should().Be(13.0);
+            accBlock.FontWeight.Should().Be(FontWeights.SemiBold);
+
+            var comboBoxes = FindVisualChildren<ComboBox>(view).ToList();
+            var bankCombo = comboBoxes.FirstOrDefault(c => c.ItemsSource == vm.AvailableBanks);
+            bankCombo.Should().NotBeNull("Bank selector ComboBox must be present in the summary card");
+            bankCombo!.FontSize.Should().Be(13.0);
+            bankCombo.FontWeight.Should().Be(FontWeights.SemiBold);
+        }
+
+        [WpfFact]
+        public void Render_HomeViewUserControl_Preview_Image()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+            doc.BankName = "HDFC Bank";
+            doc.AccountNumber = "50200075012327";
+
+            vm.CurrentDocument = doc;
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Width = 1000;
+            view.Height = 650;
+            view.Measure(new Size(1000, 650));
+            view.Arrange(new Rect(0, 0, 1000, 650));
+            view.UpdateLayout();
+
+            var rtb = new System.Windows.Media.Imaging.RenderTargetBitmap(1000, 650, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            rtb.Render(view);
+
+            var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+            encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(rtb));
+
+            string outDir = @"C:\Users\rahul\.gemini\antigravity\brain\cd3d9657-643a-46bf-97d5-87cee5c83cde";
+            string outFile = System.IO.Path.Combine(outDir, "preview_option_a.png");
+
+            using var fs = System.IO.File.Create(outFile);
+            encoder.Save(fs);
+        }
+
+        [WpfFact]
         public void HomeViewUserControl_ReconciliationNotes_HasWrappingConfigured()
         {
             var vm = CreateTestViewModel();
