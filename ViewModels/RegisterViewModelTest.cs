@@ -92,6 +92,104 @@ namespace PostXMLTest.ViewModels
             // Assert
             vm.IsGstinMandatory.Should().Be(expectedMandatory);
             vm.GstinFieldLabel.Should().Be(expectedLabel);
+            vm.IsGstinRowVisible.Should().Be(!category.IsGstinOptional());
+        }
+
+        [Fact]
+        public void Constructor_StartsCategoryBlank_ForcesUserToSelectCategory()
+        {
+            // Arrange & Act
+            var vm = CreateViewModel();
+
+            // Assert
+            vm.SelectedCustomerCategory.Should().BeNull();
+            vm.IsGstinRowVisible.Should().BeTrue();
+            vm.RegisterCommand.CanExecute(null).Should().BeFalse();
+        }
+
+        [Fact]
+        public void SelectedCustomerCategory_SetToAccountant_HidesGstinRow()
+        {
+            // Arrange
+            var vm = CreateViewModel();
+
+            // Act
+            vm.SelectedCustomerCategory = CustomerCategory.ACCOUNTANT;
+
+            // Assert
+            vm.IsGstinRowVisible.Should().BeFalse();
+            vm.IsGstinMandatory.Should().BeFalse();
+        }
+
+        [Theory]
+        [InlineData(CustomerCategory.CA_FIRM)]
+        [InlineData(CustomerCategory.RETAILER)]
+        [InlineData(CustomerCategory.MANUFACTURER)]
+        public void SelectedCustomerCategory_SetToCategoryNeedingGstin_ShowsGstinRow(CustomerCategory category)
+        {
+            // Arrange
+            var vm = CreateViewModel();
+
+            // Act
+            vm.SelectedCustomerCategory = category;
+
+            // Assert
+            vm.IsGstinRowVisible.Should().BeTrue();
+            vm.IsGstinMandatory.Should().BeTrue();
+        }
+
+        [Fact]
+        public void SelectedCustomerCategory_SwitchingToAccountant_ClearsAnyExistingGstin()
+        {
+            // Arrange
+            var vm = CreateViewModel();
+            vm.SelectedCustomerCategory = CustomerCategory.RETAILER;
+            vm.Gstin = "10AABCU9355J1Z9";
+            vm.IsGstinVerified = true;
+            vm.FirmName = "TEST TRADERS";
+
+            // Act
+            vm.SelectedCustomerCategory = CustomerCategory.ACCOUNTANT;
+
+            // Assert
+            vm.Gstin.Should().BeEmpty();
+            vm.IsGstinRowVisible.Should().BeFalse();
+            vm.IsGstinVerified.Should().BeFalse();
+            vm.FirmName.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task ExecuteRegisterCommandAsync_WhenCategoryIsNull_FailsValidationWithFeedback()
+        {
+            // Arrange
+            var vm = CreateViewModel();
+            vm.SelectedCustomerCategory = null;
+            vm.MobileNumber = "9876543210";
+            vm.Email = "test@example.com";
+
+            // Act
+            await vm.RegisterCommand.ExecuteAsync(null);
+
+            // Assert
+            _repoMock.Verify(r => r.RegisterCustomerAsync(It.IsAny<Customer>(), It.IsAny<Mobile>()), Times.Never);
+            vm.RegisterFeedbackMessage.Should().Contain("Please select a category");
+        }
+
+        [Fact]
+        public void CanExecute_CategorySelectionRequired_GovernsRegisterButton()
+        {
+            // Arrange
+            var vm = CreateViewModel();
+            vm.MobileNumber = "9876543210";
+            vm.Email = "test@example.com";
+
+            // Category is null -> false
+            vm.SelectedCustomerCategory.Should().BeNull();
+            vm.RegisterCommand.CanExecute(null).Should().BeFalse();
+
+            // Category selected -> true
+            vm.SelectedCustomerCategory = CustomerCategory.ACCOUNTANT;
+            vm.RegisterCommand.CanExecute(null).Should().BeTrue();
         }
 
         [Fact]
