@@ -384,5 +384,45 @@ namespace PostXMLTest.Models
         }
 
         #endregion
+        [Fact]
+        public void CanConvertPages_And_RemainingPages_EnforcesAllowanceCorrectly()
+        {
+            var quota = new AccountQuotaInfo
+            {
+                PageQuotaLimit = 100,
+                PagesConvertedPeriod = 90,
+                IsConversionAllowed = true,
+                SubscriptionStatus = "active"
+            };
+
+            quota.RemainingPages.Should().Be(10);
+            quota.IsPageQuotaExceeded.Should().BeFalse();
+
+            // 10 pages or fewer allowed
+            quota.CanConvertPages(5).Should().BeTrue();
+            quota.CanConvertPages(10).Should().BeTrue();
+
+            // 11 pages exceeds remaining quota
+            quota.CanConvertPages(11).Should().BeFalse();
+            quota.CanConvertPages(44).Should().BeFalse();
+
+            // When exactly at limit
+            quota.PagesConvertedPeriod = 100;
+            quota.RemainingPages.Should().Be(0);
+            quota.IsPageQuotaExceeded.Should().BeTrue();
+            quota.CanConvertPages(1).Should().BeFalse();
+
+            // When over allowance (e.g. 134 / 100)
+            quota.PagesConvertedPeriod = 134;
+            quota.RemainingPages.Should().Be(0);
+            quota.IsPageQuotaExceeded.Should().BeTrue();
+            quota.CanConvertPages(1).Should().BeFalse();
+
+            // When limit is unlimited (<= 0)
+            quota.PageQuotaLimit = 0;
+            quota.RemainingPages.Should().Be(int.MaxValue);
+            quota.IsPageQuotaExceeded.Should().BeFalse();
+            quota.CanConvertPages(500).Should().BeTrue();
+        }
     }
 }

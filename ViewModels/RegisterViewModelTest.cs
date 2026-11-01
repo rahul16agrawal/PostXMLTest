@@ -57,16 +57,21 @@ namespace PostXMLTest.ViewModels
         }
 
         [Fact]
-        public void CustomerCategories_ContainsAccountantAndCaFirm()
+        public void CustomerCategories_PostXml_OnlyContainsAccountantAndCaFirm()
         {
             // Arrange
             var vm = CreateViewModel();
 
             // Assert
+            vm.CustomerCategories.Should().HaveCount(2);
             vm.CustomerCategories.Should().Contain(CustomerCategory.ACCOUNTANT);
             vm.CustomerCategories.Should().Contain(CustomerCategory.CA_FIRM);
-            vm.CustomerCategories.Should().Contain(CustomerCategory.RETAILER);
-            vm.CustomerCategories.Should().Contain(CustomerCategory.MANUFACTURER);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.MANUFACTURER);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.AADHATIYA);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.AGENT);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.WHOLESALER);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.RETAILER);
+            vm.CustomerCategories.Should().NotContain(CustomerCategory.TRANSPORTER);
         }
 
         [Theory]
