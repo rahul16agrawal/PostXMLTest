@@ -1,5 +1,6 @@
 using System;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -55,6 +56,36 @@ namespace PostXMLTest.ViewModels
                 sessionMock.Object);
 
             return (vm, navMock, repoMock, profileMock, sessionMock);
+        }
+
+        private static (LoginViewModel ViewModel, Mock<INavigationService> NavMock, Mock<ICustomerRepository> RepoMock, Mock<IProfileService> ProfileMock, Mock<ICustomerSessionService> SessionMock, Mock<IPostXmlBillingService> BillingMock) CreateViewModelWithBilling()
+        {
+            var navMock = new Mock<INavigationService>();
+            var repoMock = new Mock<ICustomerRepository>();
+            var loggerMock = new Mock<ILogger<LoginViewModel>>();
+            var profileMock = new Mock<IProfileService>();
+            var sessionMock = new Mock<ICustomerSessionService>();
+            var featuresMock = new Mock<IOptions<PostazeSoftwareFeatures>>();
+            var billingMock = new Mock<IPostXmlBillingService>();
+
+            featuresMock.Setup(f => f.Value).Returns(new PostazeSoftwareFeatures
+            {
+                ApplicationName = "PostXML",
+                ApplicationTagLine = "From Bank Statement to Tally XML in Seconds"
+            });
+
+            sessionMock.SetupProperty(s => s.Token, "test_bearer_token");
+
+            var vm = new LoginViewModel(
+                navMock.Object,
+                repoMock.Object,
+                featuresMock.Object,
+                loggerMock.Object,
+                profileMock.Object,
+                sessionMock.Object,
+                billingMock.Object);
+
+            return (vm, navMock, repoMock, profileMock, sessionMock, billingMock);
         }
 
         [Fact]
@@ -185,6 +216,62 @@ namespace PostXMLTest.ViewModels
             // Assert
             changedProperty.Should().Be(nameof(vm.Username));
             vm.Username.Should().Be("NewUsername");
+        }
+
+        [Fact]
+        public async Task LoginCommand_WhenLoginSucceeds_RefreshesQuotaAsync()
+        {
+            // Arrange
+            var (vm, navMock, repoMock, _, _, billingMock) = CreateViewModelWithBilling();
+            var customer = new Customer
+            {
+                CustomerId = 42,
+                Category = CustomerCategory.WHOLESALER,
+                Gstin = "27AABCU9603R1ZM",
+                EmailId = "ca@firm.com"
+            };
+
+            repoMock.Setup(r => r.AuthenticateCustomerAsync("validUser", It.IsAny<SecureString>()))
+                .ReturnsAsync(customer);
+
+            vm.Username = "validUser";
+            vm.Password = ToSecureString("secret");
+
+            // Act
+            await vm.LoginCommand.ExecuteAsync(null);
+
+            // Assert
+            billingMock.Verify(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()), Times.Once);
+            navMock.Verify(n => n.NavigateTo(It.IsAny<Action<DashboardViewModel>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoginCommand_WhenRefreshQuotaThrows_DoesNotBlockNavigation()
+        {
+            // Arrange
+            var (vm, navMock, repoMock, _, _, billingMock) = CreateViewModelWithBilling();
+            var customer = new Customer
+            {
+                CustomerId = 42,
+                Category = CustomerCategory.WHOLESALER,
+                Gstin = "27AABCU9603R1ZM",
+                EmailId = "ca@firm.com"
+            };
+
+            repoMock.Setup(r => r.AuthenticateCustomerAsync("validUser", It.IsAny<SecureString>()))
+                .ReturnsAsync(customer);
+            billingMock.Setup(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Network timeout"));
+
+            vm.Username = "validUser";
+            vm.Password = ToSecureString("secret");
+
+            // Act
+            await vm.LoginCommand.ExecuteAsync(null);
+
+            // Assert
+            billingMock.Verify(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()), Times.Once);
+            navMock.Verify(n => n.NavigateTo(It.IsAny<Action<DashboardViewModel>>()), Times.Once);
         }
     }
 }

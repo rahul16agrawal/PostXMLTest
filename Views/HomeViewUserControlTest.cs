@@ -63,6 +63,52 @@ namespace PostXMLTest.Views
         }
 
         [WpfFact]
+        public void HomeViewUserControl_WhenErrorMessageSetOnLandingView_DisplaysVisibleErrorBanner()
+        {
+            var vm = CreateTestViewModel();
+            vm.IsStatementLoaded = false;
+            vm.ErrorMessage = "* Page quota exceeded (134 / 100 pages used). Please upgrade your plan to convert statements.";
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var errorBlock = textBlocks.FirstOrDefault(t =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(t) == "Home_TxtErrorMessage");
+
+            errorBlock.Should().NotBeNull();
+            errorBlock!.Text.Should().Be(vm.ErrorMessage);
+
+            var parentBorder = FindVisualParent<Border>(errorBlock);
+            parentBorder.Should().NotBeNull();
+            parentBorder!.Visibility.Should().Be(Visibility.Visible);
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_WhenErrorMessageIsNullOnLandingView_CollapsesErrorBanner()
+        {
+            var vm = CreateTestViewModel();
+            vm.IsStatementLoaded = false;
+            vm.ErrorMessage = null;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var errorBlock = textBlocks.FirstOrDefault(t =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(t) == "Home_TxtErrorMessage");
+
+            errorBlock.Should().NotBeNull();
+            var parentBorder = FindVisualParent<Border>(errorBlock);
+            parentBorder.Should().NotBeNull();
+            parentBorder!.Visibility.Should().Be(Visibility.Collapsed);
+        }
+
+        [WpfFact]
         public void HomeViewUserControl_WhenStatementLoaded_RendersSplitTwoSectionSummaryHeader()
         {
             var vm = CreateTestViewModel();

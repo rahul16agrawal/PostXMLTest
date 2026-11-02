@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -1155,6 +1156,132 @@ namespace PostXMLTest.ViewModels
             {
                 if (File.Exists(tempFile)) File.Delete(tempFile);
             }
+        }
+
+        [Fact]
+        public async Task LoadStatementFileAsync_CallsRefreshQuotaAsync_BeforeEvaluatingQuota()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                var quota = new AccountQuotaInfo
+                {
+                    PageQuotaLimit = 100,
+                    PagesConvertedPeriod = 134,
+                    IsConversionAllowed = true,
+                    SubscriptionStatus = "active"
+                };
+                billingMock.Setup(b => b.CurrentQuota).Returns(quota);
+
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    new Mock<IExcelExportService>().Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                await vm.LoadStatementFileAsync(tempFile);
+
+                billingMock.Verify(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()), Times.Once);
+            }
+            finally
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
+
+        [Fact]
+        public async Task OpenExportDialogAsync_CallsRefreshQuotaAsync_BeforeOpeningDialog()
+        {
+            var billingMock = new Mock<IPostXmlBillingService>();
+            var quota = new AccountQuotaInfo
+            {
+                PageQuotaLimit = 100,
+                PagesConvertedPeriod = 10,
+                IsConversionAllowed = true,
+                SubscriptionStatus = "active"
+            };
+            billingMock.Setup(b => b.CurrentQuota).Returns(quota);
+
+            var vm = new HomeViewModel(
+                _parserMock.Object,
+                _tallyXmlExportMock.Object,
+                new Mock<IExcelExportService>().Object,
+                _reconciliationEngineMock.Object,
+                _fileDialogMock.Object,
+                _dispatcherMock.Object,
+                _loggerMock.Object,
+                new Mock<IBankDetectorService>().Object,
+                billingMock.Object
+            );
+
+            var doc = new StatementDocument
+            {
+                BankName = "ICICI Bank",
+                TotalPages = 1,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 100m, Type = TransactionType.Withdrawal }
+                }
+            };
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+
+            await vm.OpenExportDialogAsync();
+
+            billingMock.Verify(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()), Times.Once);
+            vm.IsExportDialogOpen.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_CallsRefreshQuotaAsync_BeforeExporting()
+        {
+            var billingMock = new Mock<IPostXmlBillingService>();
+            var quota = new AccountQuotaInfo
+            {
+                PageQuotaLimit = 100,
+                PagesConvertedPeriod = 100,
+                IsConversionAllowed = true,
+                SubscriptionStatus = "active"
+            };
+            billingMock.Setup(b => b.CurrentQuota).Returns(quota);
+
+            var vm = new HomeViewModel(
+                _parserMock.Object,
+                _tallyXmlExportMock.Object,
+                new Mock<IExcelExportService>().Object,
+                _reconciliationEngineMock.Object,
+                _fileDialogMock.Object,
+                _dispatcherMock.Object,
+                _loggerMock.Object,
+                new Mock<IBankDetectorService>().Object,
+                billingMock.Object
+            );
+
+            var doc = new StatementDocument
+            {
+                BankName = "HDFC Bank",
+                TotalPages = 2,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 100m, Type = TransactionType.Withdrawal }
+                }
+            };
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.BankLedgerName = "HDFC Bank";
+            vm.IsXmlFormat = true;
+            vm.IsExportDialogOpen = true;
+
+            await vm.ConfirmExportAsync();
+
+            billingMock.Verify(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         #endregion
