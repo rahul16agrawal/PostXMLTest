@@ -35,6 +35,12 @@ namespace PostXMLTest.Services
         }
 
         [Fact]
+        public void IsOnline_BeforeAnyCall_DefaultsToFalse()
+        {
+            _billingService.IsOnline.Should().BeFalse();
+        }
+
+        [Fact]
         public async Task RefreshQuotaAsync_WhenApiReturns200WithDataWrapper_UpdatesQuotaAndReturns()
         {
             // Arrange
@@ -73,6 +79,7 @@ namespace PostXMLTest.Services
             result.PagesConvertedTotal.Should().Be(428);
             result.PageQuotaLimit.Should().Be(5000);
             _billingService.CurrentQuota.Should().BeSameAs(result);
+            _billingService.IsOnline.Should().BeTrue();
         }
 
         [Fact]
@@ -92,6 +99,7 @@ namespace PostXMLTest.Services
             // Assert
             result.Should().NotBeNull();
             result!.PlanCode.Should().Be("free_trial"); // default cached
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         [Fact]
@@ -186,6 +194,7 @@ namespace PostXMLTest.Services
             success.Should().BeTrue();
             _billingService.CurrentQuota!.PagesConvertedTotal.Should().Be(442);
             _billingService.CurrentQuota!.PagesConvertedPeriod.Should().Be(442);
+            _billingService.IsOnline.Should().BeTrue();
         }
 
         [Fact]
@@ -209,6 +218,7 @@ namespace PostXMLTest.Services
             bool success = await _billingService.ReportStatementConvertedAsync(telemetry);
 
             success.Should().BeFalse();
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         #region Edge Cases, Nulls & Exception Handling
@@ -241,6 +251,7 @@ namespace PostXMLTest.Services
 
             result.Should().NotBeNull();
             result!.PlanCode.Should().Be("free_trial");
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         [Fact]
@@ -257,6 +268,7 @@ namespace PostXMLTest.Services
 
             result.Should().NotBeNull();
             result!.PlanCode.Should().Be("free_trial");
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         [Fact]
@@ -276,6 +288,7 @@ namespace PostXMLTest.Services
 
             result.Should().NotBeNull();
             result!.PlanCode.Should().Be("free_trial");
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         [Fact]
@@ -309,6 +322,7 @@ namespace PostXMLTest.Services
             result.DisplayStatus.Should().Be("ACTIVE");
             result.PagesConvertedTotal.Should().Be(210);
             result.PageQuotaLimit.Should().Be(2500);
+            _billingService.IsOnline.Should().BeTrue();
         }
 
         [Fact]
@@ -365,6 +379,7 @@ namespace PostXMLTest.Services
             bool success = await _billingService.ReportStatementConvertedAsync(telemetry);
 
             success.Should().BeFalse();
+            _billingService.IsOnline.Should().BeFalse();
         }
 
         [Fact]
@@ -396,6 +411,7 @@ namespace PostXMLTest.Services
 
             // Should succeed without throwing unhandled deserialization or type cast exception
             success.Should().BeTrue();
+            _billingService.IsOnline.Should().BeTrue();
         }
 
         #endregion

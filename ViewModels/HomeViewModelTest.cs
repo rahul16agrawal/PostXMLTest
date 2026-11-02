@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -719,6 +720,9 @@ namespace PostXMLTest.ViewModels
             try
             {
                 var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
+                billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
                 var excelMock = new Mock<IExcelExportService>();
                 var detectorMock = new Mock<IBankDetectorService>();
                 var vm = new HomeViewModel(
@@ -808,6 +812,9 @@ namespace PostXMLTest.ViewModels
             try
             {
                 var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
+                billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(true);
                 var vm = new HomeViewModel(
                     _parserMock.Object,
                     _tallyXmlExportMock.Object,
@@ -859,12 +866,13 @@ namespace PostXMLTest.ViewModels
         }
 
         [Fact]
-        public async Task ConfirmExportAsync_WhenBillingServiceThrowsException_DoesNotFailExport()
+        public async Task ConfirmExportAsync_WhenBillingServiceThrowsException_BlocksExportAndDoesNotWriteFile()
         {
             string tempOut = Path.Combine(Path.GetTempPath(), $"telemetry_fail_{Guid.NewGuid():N}.xml");
             try
             {
                 var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
                 billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
                     .ThrowsAsync(new InvalidOperationException("Telemetry endpoint offline"));
 
@@ -900,11 +908,11 @@ namespace PostXMLTest.ViewModels
                 _fileDialogMock.Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempOut);
                 _tallyXmlExportMock.Setup(t => t.GenerateTallyXml(doc, "SBI", "Default Company")).Returns("<XML />");
 
-                // Export should succeed despite telemetry background exception
+                // Export must be blocked when telemetry endpoint throws/fails
                 await vm.ConfirmExportAsync();
 
-                vm.SuccessMessage.Should().Contain("Tally XML voucher exported successfully");
-                File.Exists(tempOut).Should().BeTrue();
+                vm.ErrorMessage.Should().Contain("Export blocked");
+                File.Exists(tempOut).Should().BeFalse();
             }
             finally
             {
@@ -923,6 +931,220 @@ namespace PostXMLTest.ViewModels
         }
 
 
+        [Fact]
+        public async Task LoadStatementFileAsync_WhenDeviceOffline_BlocksParsingAndDisplaysClearErrorMessage()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(false);
+                billingMock.Setup(b => b.RefreshQuotaAsync(It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new HttpRequestException("No route to host"));
+
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    new Mock<IExcelExportService>().Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                await vm.LoadStatementFileAsync(tempFile);
+
+                vm.ErrorMessage.Should().Contain("Internet connection required");
+                vm.ErrorMessage.Should().Contain("PostXML needs an active connection to verify your account and page quota");
+                vm.StatusMessage.Should().Be("Internet connection required.");
+                vm.IsProcessing.Should().BeFalse();
+                vm.IsStatementLoaded.Should().BeFalse();
+                _parserMock.Verify(p => p.ParsePdf(It.IsAny<Stream>(), It.IsAny<string>()), Times.Never);
+            }
+            finally
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
+
+        [Fact]
+        public async Task OpenExportDialogAsync_WhenDeviceOffline_BlocksDialogAndDisplaysClearErrorMessage()
+        {
+            var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(false);
+
+            var vm = new HomeViewModel(
+                _parserMock.Object,
+                _tallyXmlExportMock.Object,
+                new Mock<IExcelExportService>().Object,
+                _reconciliationEngineMock.Object,
+                _fileDialogMock.Object,
+                _dispatcherMock.Object,
+                _loggerMock.Object,
+                new Mock<IBankDetectorService>().Object,
+                billingMock.Object
+            );
+
+            var doc = new StatementDocument
+            {
+                BankName = "HDFC",
+                TotalPages = 1,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 500m }
+                }
+            };
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+
+            await vm.OpenExportDialogAsync();
+
+            vm.IsExportDialogOpen.Should().BeFalse();
+            vm.ErrorMessage.Should().Contain("Internet connection required");
+            vm.ErrorMessage.Should().Contain("verify your account and page quota before exporting");
+        }
+
+        [Fact]
+        public async Task ConfirmExportAsync_WhenDeviceOffline_BlocksExportAndDisplaysClearErrorMessage()
+        {
+            var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(false);
+
+            var vm = new HomeViewModel(
+                _parserMock.Object,
+                _tallyXmlExportMock.Object,
+                new Mock<IExcelExportService>().Object,
+                _reconciliationEngineMock.Object,
+                _fileDialogMock.Object,
+                _dispatcherMock.Object,
+                _loggerMock.Object,
+                new Mock<IBankDetectorService>().Object,
+                billingMock.Object
+            );
+
+            var doc = new StatementDocument
+            {
+                BankName = "SBI",
+                TotalPages = 2,
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = DateTime.Today, WithdrawalAmount = 300m }
+                }
+            };
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.BankLedgerName = "SBI Bank A/c";
+            vm.IsExportDialogOpen = true;
+
+            await vm.ConfirmExportAsync();
+
+            vm.ExportDialogErrorMessage.Should().Contain("Internet connection required");
+            vm.ErrorMessage.Should().Contain("Internet connection required");
+            _fileDialogMock.Verify(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ExportExcelAsync_WhenOfflineDuringTelemetry_BlocksFileWriteAndDisplaysClearErrorMessage()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"excel_offline_{Guid.NewGuid():N}.xlsx");
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
+                billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(false);
+
+                var excelMock = new Mock<IExcelExportService>();
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    excelMock.Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                var doc = new StatementDocument
+                {
+                    BankName = "Axis Bank",
+                    TotalPages = 3,
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 1500m }
+                    }
+                };
+                vm.CurrentDocument = doc;
+                vm.Transactions.Add(doc.Transactions[0]);
+
+                _fileDialogMock.Setup(d => d.SaveExcelFileDialog(It.IsAny<string>())).Returns(tempOut);
+
+                await vm.ExportExcelAsync();
+
+                vm.ErrorMessage.Should().Contain("Export blocked");
+                vm.ErrorMessage.Should().Contain("active internet connection and valid page balance are required");
+                excelMock.Verify(e => e.ExportToExcelFileAsync(It.IsAny<StatementDocument>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
+        [Fact]
+        public async Task ExportTallyXmlAsync_WhenOfflineDuringTelemetry_BlocksFileWriteAndDisplaysClearErrorMessage()
+        {
+            string tempOut = Path.Combine(Path.GetTempPath(), $"xml_offline_{Guid.NewGuid():N}.xml");
+            try
+            {
+                var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
+                billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                    .ReturnsAsync(false);
+
+                var vm = new HomeViewModel(
+                    _parserMock.Object,
+                    _tallyXmlExportMock.Object,
+                    new Mock<IExcelExportService>().Object,
+                    _reconciliationEngineMock.Object,
+                    _fileDialogMock.Object,
+                    _dispatcherMock.Object,
+                    _loggerMock.Object,
+                    new Mock<IBankDetectorService>().Object,
+                    billingMock.Object
+                );
+
+                var doc = new StatementDocument
+                {
+                    BankName = "Kotak Mahindra Bank",
+                    TotalPages = 1,
+                    Transactions = new List<BankTransaction>
+                    {
+                        new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 250m }
+                    }
+                };
+                vm.CurrentDocument = doc;
+                vm.Transactions.Add(doc.Transactions[0]);
+
+                _fileDialogMock.Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>())).Returns(tempOut);
+
+                await vm.ExportTallyXmlAsync();
+
+                vm.ErrorMessage.Should().Contain("Export blocked");
+                vm.ErrorMessage.Should().Contain("active internet connection and valid page balance are required");
+                _tallyXmlExportMock.Verify(t => t.GenerateTallyXml(It.IsAny<StatementDocument>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+                File.Exists(tempOut).Should().BeFalse();
+            }
+            finally
+            {
+                if (File.Exists(tempOut)) File.Delete(tempOut);
+            }
+        }
+
         #endregion
 
         #region Quota Enforcement Tests
@@ -931,6 +1153,7 @@ namespace PostXMLTest.ViewModels
         public void OpenExportDialog_WhenQuotaExceeded_SetsErrorMessage_AndDoesNotOpenDialog()
         {
             var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(true);
             var quota = new AccountQuotaInfo
             {
                 PageQuotaLimit = 100,
@@ -977,6 +1200,7 @@ namespace PostXMLTest.ViewModels
         public async Task ConfirmExportAsync_WhenQuotaExceeded_BlocksExport_AndDoesNotWriteFile()
         {
             var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(true);
             var quota = new AccountQuotaInfo
             {
                 PageQuotaLimit = 100,
@@ -1122,6 +1346,7 @@ namespace PostXMLTest.ViewModels
             try
             {
                 var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
                 var quota = new AccountQuotaInfo
                 {
                     PageQuotaLimit = 100,
@@ -1165,6 +1390,7 @@ namespace PostXMLTest.ViewModels
             try
             {
                 var billingMock = new Mock<IPostXmlBillingService>();
+                billingMock.Setup(b => b.IsOnline).Returns(true);
                 var quota = new AccountQuotaInfo
                 {
                     PageQuotaLimit = 100,
@@ -1200,6 +1426,7 @@ namespace PostXMLTest.ViewModels
         public async Task OpenExportDialogAsync_CallsRefreshQuotaAsync_BeforeOpeningDialog()
         {
             var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(true);
             var quota = new AccountQuotaInfo
             {
                 PageQuotaLimit = 100,
@@ -1243,6 +1470,9 @@ namespace PostXMLTest.ViewModels
         public async Task ConfirmExportAsync_CallsRefreshQuotaAsync_BeforeExporting()
         {
             var billingMock = new Mock<IPostXmlBillingService>();
+            billingMock.Setup(b => b.IsOnline).Returns(true);
+            billingMock.Setup(b => b.ReportStatementConvertedAsync(It.IsAny<StatementConversionTelemetry>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
             var quota = new AccountQuotaInfo
             {
                 PageQuotaLimit = 100,
