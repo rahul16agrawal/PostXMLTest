@@ -276,7 +276,7 @@ namespace PostXMLTest.Views
 
             var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
             var successBlock = textBlocks.FirstOrDefault(t => t.Text == vm.SuccessMessage);
-            var actionErrorBlock = textBlocks.FirstOrDefault(t => t.Text == vm.ErrorMessage && t.TextTrimming == TextTrimming.CharacterEllipsis);
+            var actionErrorBlock = textBlocks.FirstOrDefault(t => t.Text == vm.ErrorMessage && t.TextWrapping == TextWrapping.Wrap);
 
             successBlock.Should().NotBeNull();
             successBlock!.ToolTip.Should().NotBeNull();
@@ -333,6 +333,63 @@ namespace PostXMLTest.Views
             };
 
             act.Should().NotThrow();
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_WhenErrorMessageSetOnLoadedStatementView_RendersWrappedErrorAlertBanner()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+            vm.ErrorMessage = "Internet connection required. PostXML needs an active connection to verify your account and page quota before exporting.";
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var errorBlock = textBlocks.FirstOrDefault(t => t.Text == vm.ErrorMessage);
+
+            errorBlock.Should().NotBeNull();
+            errorBlock!.TextWrapping.Should().Be(TextWrapping.Wrap);
+
+            var parentBorder = FindVisualParent<Border>(errorBlock);
+            parentBorder.Should().NotBeNull();
+            parentBorder!.Visibility.Should().Be(Visibility.Visible);
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_WhenExportDialogErrorMessageSet_RendersExportDialogAlertBanner()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+            vm.IsExportDialogOpen = true;
+            vm.ExportDialogErrorMessage = "Export blocked: Device appears offline. Internet connection required.";
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var errorBlock = textBlocks.FirstOrDefault(t =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(t) == "Home_TxtDialogBankLedgerError");
+
+            errorBlock.Should().NotBeNull();
+            errorBlock!.Text.Should().Be(vm.ExportDialogErrorMessage);
+            errorBlock.TextWrapping.Should().Be(TextWrapping.Wrap);
+
+            var parentBorder = FindVisualParent<Border>(errorBlock);
+            parentBorder.Should().NotBeNull();
+            parentBorder!.Visibility.Should().Be(Visibility.Visible);
         }
 
         private static HomeViewModel CreateTestViewModel()
