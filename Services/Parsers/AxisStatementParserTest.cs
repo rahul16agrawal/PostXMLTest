@@ -81,5 +81,34 @@ namespace PostXMLTest.Services.Parsers
             Assert.NotNull(doc);
             Assert.Equal(89, doc.Transactions.Count);
         }
+
+        [Fact]
+        public void Parse_MultiLineNarration_DoesNotBleedIntoAdjacentTransactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "AxisBank", "AxisBank_Statement_001.pdf");
+
+            var profile = new BankProfile
+            {
+                BankCode = "AXIS",
+                DisplayName = "Axis Bank",
+                DateFormat = "dd-MM-yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            // Find the GST transaction on 31-12-2025
+            var gstTx = doc.Transactions.FirstOrDefault(t => t.RawNarration.Contains("GST @18% on Monthly Service Chrgs"));
+            Assert.NotNull(gstTx);
+            // Verify it did not bleed the next transaction's RTGS narration into this one
+            Assert.DoesNotContain("RTGS", gstTx.RawNarration);
+
+            // Find the subsequent transaction on 31-12-2025
+            var rtgsTx = doc.Transactions.FirstOrDefault(t => t.RawNarration.StartsWith("RTGS/SCBLR12025123100959425"));
+            Assert.NotNull(rtgsTx);
+        }
     }
 }
