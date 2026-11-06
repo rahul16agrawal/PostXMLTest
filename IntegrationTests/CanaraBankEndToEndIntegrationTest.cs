@@ -119,5 +119,79 @@ namespace PostXMLTest.IntegrationTests
                 Assert.Equal(goldType, genType);
             }
         }
+
+        [Fact]
+        public void CanaraBank_Statement_002_October2026_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 002 (October 2026) test fixture
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "CanaraBank", "CanaraBank_Statement_002.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "CanaraBank", "CanaraBank_Expected_002.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+            Assert.True(File.Exists(goldXmlPath), $"Gold XML fixture not found at {goldXmlPath}");
+
+            // 2. Parse encrypted PDF with password '0463'
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.True(_parser.IsPdfEncrypted(stream), "PDF should be detected as encrypted.");
+                doc = _parser.ParsePdf(stream, "0463");
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("Canara Bank", doc.BankName);
+            Assert.Equal("2316261020463", doc.AccountNumber);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(315, doc.Transactions.Count);
+            Assert.Equal(-3714745.81m, doc.OpeningBalance);
+            Assert.Equal(-3558485.71m, doc.ClosingBalance);
+            Assert.Equal(2667173.00m, doc.TotalDeposits);
+            Assert.Equal(2510912.90m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // 5. Generate Tally Prime XML
+            string generatedXml = _exportService.GenerateTallyXml(doc, "Canara Bank");
+            Assert.False(string.IsNullOrWhiteSpace(generatedXml));
+
+            var xdoc = XDocument.Parse(generatedXml);
+            var vouchers = xdoc.Descendants("VOUCHER").ToList();
+
+            Assert.Equal(315, vouchers.Count);
+
+            int receiptCount = vouchers.Count(v => (string?)v.Attribute("VCHTYPE") == "Receipt");
+            int paymentCount = vouchers.Count(v => (string?)v.Attribute("VCHTYPE") == "Payment");
+
+            Assert.Equal(279, receiptCount);
+            Assert.Equal(36, paymentCount);
+
+            // Assert Bank Ledger Master definition
+            var canaraLedger = xdoc.Descendants("LEDGER").FirstOrDefault(l => (string?)l.Attribute("NAME") == "Canara Bank");
+            Assert.NotNull(canaraLedger);
+            Assert.Null(canaraLedger!.Element("OPENINGBALANCE"));
+
+            // 6. Verify Gold Master Conformance
+            var goldDoc = XDocument.Parse(File.ReadAllText(goldXmlPath));
+            var goldVouchers = goldDoc.Descendants("VOUCHER").ToList();
+
+            Assert.Equal(goldVouchers.Count, vouchers.Count);
+
+            for (int i = 0; i < vouchers.Count; i++)
+            {
+                string? genType = (string?)vouchers[i].Attribute("VCHTYPE");
+                string? goldType = (string?)goldVouchers[i].Attribute("VCHTYPE");
+                Assert.Equal(goldType, genType);
+            }
+        }
     }
 }
