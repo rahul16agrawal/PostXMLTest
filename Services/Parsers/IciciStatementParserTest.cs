@@ -79,5 +79,98 @@ namespace PostXMLTest.Services.Parsers
             Assert.Equal(1366343.68m, doc.TotalDeposits);
             Assert.Equal(838710.38m, doc.TotalWithdrawals);
         }
+
+        [Fact]
+        public void Parse_Statement003_ExtractsAll166Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_003.pdf");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                DateFormat = "dd.MM.yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+            Assert.Equal(161737.01m, doc.OpeningBalance);
+            Assert.Equal(2889.78m, doc.ClosingBalance);
+            Assert.Equal(166, doc.Transactions.Count);
+            Assert.Equal(258245.00m, doc.TotalDeposits);
+            Assert.Equal(417092.23m, doc.TotalWithdrawals);
+        }
+
+        [Fact]
+        public void Parse_Statement004_ExtractsAll88Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_004.pdf");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                DateFormat = "dd.MM.yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+            Assert.Equal(19310.32m, doc.OpeningBalance);
+            Assert.Equal(8137.51m, doc.ClosingBalance);
+            Assert.Equal(88, doc.Transactions.Count);
+            Assert.Equal(327516.44m, doc.TotalDeposits);
+            Assert.Equal(338689.25m, doc.TotalWithdrawals);
+        }
+
+        [Fact]
+        public void Parse_Statement005_ExtractsAll86Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_005.pdf");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                DateFormat = "dd.MM.yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+            Assert.Equal(191710.27m, doc.OpeningBalance);
+            Assert.Equal(165490.00m, doc.ClosingBalance);
+            Assert.Equal(86, doc.Transactions.Count);
+            Assert.Equal(321974.57m, doc.TotalDeposits);
+            Assert.Equal(348194.84m, doc.TotalWithdrawals);
+        }
     }
 }

@@ -166,5 +166,191 @@ namespace PostXMLTest.IntegrationTests
             var expectedVouchers = expectedXDoc.Descendants("VOUCHER").ToList();
             Assert.Equal(expectedVouchers.Count, vouchers.Count);
         }
+
+        [Fact]
+        public void ICICIBank_Statement_003_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 003 test fixture (OpTransactionHistory 06-11-2026 - May to Nov 2026)
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_003.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Expected_003.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+            Assert.True(File.Exists(goldXmlPath), $"Gold XML fixture not found at {goldXmlPath}");
+
+            // 2. Parse PDF (unencrypted NetBanking transaction history)
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.False(_parser.IsPdfEncrypted(stream), "PDF fixture should be unencrypted.");
+                doc = _parser.ParsePdf(stream);
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(166, doc.Transactions.Count);
+            Assert.Equal(161737.01m, doc.OpeningBalance);
+            Assert.Equal(2889.78m, doc.ClosingBalance);
+            Assert.Equal(258245.00m, doc.TotalDeposits);
+            Assert.Equal(417092.23m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
+            // 5. Assert XML export against Gold Master
+            string actualXml = _exportService.GenerateTallyXml(doc, "ICICI Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var xDoc = XDocument.Parse(actualXml);
+            var vouchers = xDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(166, vouchers.Count);
+
+            string expectedXml = File.ReadAllText(goldXmlPath);
+            var expectedXDoc = XDocument.Parse(expectedXml);
+            var expectedVouchers = expectedXDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(expectedVouchers.Count, vouchers.Count);
+        }
+
+        [Fact]
+        public void ICICIBank_Statement_004_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 004 test fixture (OpTransactionHistory CY 2025)
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_004.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Expected_004.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+            Assert.True(File.Exists(goldXmlPath), $"Gold XML fixture not found at {goldXmlPath}");
+
+            // 2. Parse PDF (unencrypted NetBanking transaction history)
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.False(_parser.IsPdfEncrypted(stream), "PDF fixture should be unencrypted.");
+                doc = _parser.ParsePdf(stream);
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(88, doc.Transactions.Count);
+            Assert.Equal(19310.32m, doc.OpeningBalance);
+            Assert.Equal(8137.51m, doc.ClosingBalance);
+            Assert.Equal(327516.44m, doc.TotalDeposits);
+            Assert.Equal(338689.25m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
+            // 5. Assert XML export against Gold Master
+            string actualXml = _exportService.GenerateTallyXml(doc, "ICICI Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var xDoc = XDocument.Parse(actualXml);
+            var vouchers = xDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(88, vouchers.Count);
+
+            string expectedXml = File.ReadAllText(goldXmlPath);
+            var expectedXDoc = XDocument.Parse(expectedXml);
+            var expectedVouchers = expectedXDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(expectedVouchers.Count, vouchers.Count);
+        }
+
+        [Fact]
+        public void ICICIBank_Statement_005_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 005 test fixture (OpTransactionHistory FY 2025-26)
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_005.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Expected_005.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+            Assert.True(File.Exists(goldXmlPath), $"Gold XML fixture not found at {goldXmlPath}");
+
+            // 2. Parse PDF (unencrypted NetBanking transaction history)
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.False(_parser.IsPdfEncrypted(stream), "PDF fixture should be unencrypted.");
+                doc = _parser.ParsePdf(stream);
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal("NEHA BANSAL", doc.AccountHolderName);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(86, doc.Transactions.Count);
+            Assert.Equal(191710.27m, doc.OpeningBalance);
+            Assert.Equal(165490.00m, doc.ClosingBalance);
+            Assert.Equal(321974.57m, doc.TotalDeposits);
+            Assert.Equal(348194.84m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
+            // 5. Assert XML export against Gold Master
+            string actualXml = _exportService.GenerateTallyXml(doc, "ICICI Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var xDoc = XDocument.Parse(actualXml);
+            var vouchers = xDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(86, vouchers.Count);
+
+            string expectedXml = File.ReadAllText(goldXmlPath);
+            var expectedXDoc = XDocument.Parse(expectedXml);
+            var expectedVouchers = expectedXDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(expectedVouchers.Count, vouchers.Count);
+        }
     }
 }
