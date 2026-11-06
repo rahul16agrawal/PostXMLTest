@@ -1,0 +1,1030 @@
+<ENVELOPE>
+  <HEADER>
+    <TALLYREQUEST>Import Data</TALLYREQUEST>
+  </HEADER>
+  <BODY>
+    <IMPORTDATA>
+      <REQUESTDESC>
+        <REPORTNAME>All Masters</REPORTNAME>
+        <STATICVARIABLES>
+          <SVOverwriteImpVch>Yes</SVOverwriteImpVch>
+        </STATICVARIABLES>
+      </REQUESTDESC>
+      <REQUESTDATA>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="Suspense A/c" RESERVEDNAME="">
+            <PARENT>Suspense A/c</PARENT>
+            <ISBILLWISEON>No</ISBILLWISEON>
+            <AFFECTSSTOCK>No</AFFECTSSTOCK>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="Staff Welfare Expense" RESERVEDNAME="">
+            <PARENT>Indirect Expenses</PARENT>
+            <ISBILLWISEON>No</ISBILLWISEON>
+            <AFFECTSSTOCK>No</AFFECTSSTOCK>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <LEDGER NAME="ICICI Bank A/c" RESERVEDNAME="">
+            <PARENT>Bank Accounts</PARENT>
+            <ISBILLWISEON>No</ISBILLWISEON>
+            <AFFECTSSTOCK>No</AFFECTSSTOCK>
+          </LEDGER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261001</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>1</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261001</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>L/627483783551/PYTM6100124087744609333XXXXXXXXX XXX MATADIN RATANLAL UPI/MATADIN RA/XX8037@barodam/Verified M/BANK OF</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>16.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261001</DATE>
+                <INSTRUMENTDATE>20261001</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>16.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-16.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261002</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>2</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261002</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BA/664103044217/ICIe4e3ef018e3d4553910bba820de6e36 8 Babai Tiffins VTR 1</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>4677.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261002</DATE>
+                <INSTRUMENTDATE>20261002</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>4677.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-4677.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261002</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>3</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261002</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Babai Tiff/XXqq2w@pty/Breakfast/YES BANK P/664182957796/ICI233065814d4e492caf656292a35c30c3 Zepto</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>490.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261002</DATE>
+                <INSTRUMENTDATE>20261002</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>490.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-490.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261002</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>4</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Staff Welfare Expense</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261002</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Zepto/XXline@ybl/UPI/YES BANK L/664108171588/ICI8fd02ec45a1c4d0286a0764093904c06 ZOMATO UPI/ZOMATO/XXmato@hdfcban/UPI/HDFC</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>886.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261002</DATE>
+                <INSTRUMENTDATE>20261002</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Staff Welfare Expense</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Staff Welfare Expense</BANKPARTYNAME>
+                <AMOUNT>886.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Staff Welfare Expense</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-886.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261002</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>5</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Staff Welfare Expense</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261002</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/664179077089/ICIec936a8ce98a4b23907eaaa406f0f6 11 Zomato UPI/Zomato/XXpayu@hdfcban/UPIIntent/HDFC</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>1086.79</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261002</DATE>
+                <INSTRUMENTDATE>20261002</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Staff Welfare Expense</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Staff Welfare Expense</BANKPARTYNAME>
+                <AMOUNT>1086.79</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Staff Welfare Expense</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-1086.79</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261002</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>6</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261002</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/664122378594/PPPL310453026200210261646236ab f9287 kediapuja204 okicici UPI/kediapuja2/XXa204@okicici/From Puja/Kotak</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>210.44</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261002</DATE>
+                <INSTRUMENTDATE>20261002</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>210.44</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-210.44</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261003</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>7</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261003</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>Mahi/627645763353/ICI07ba2990fda1491395d723b694119 687</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>4400.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261003</DATE>
+                <INSTRUMENTDATE>20261003</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>4400.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-4400.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261003</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>8</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261003</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>DEBIT CARD MPS/PVR INOX LI/202610031655/066775/BENGALURU GABBAR CHAI</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>465.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261003</DATE>
+                <INSTRUMENTDATE>20261003</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>465.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-465.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261003</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>9</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261003</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/GABBAR CHA/XX51sv@ptys/UPI/YES BANK L/627680088364/ICI0a17c91a0de946dcb53c8ab260c9128a Mr Ganga Ram Yadav</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>1157.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261003</DATE>
+                <INSTRUMENTDATE>20261003</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>1157.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-1157.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261003</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>10</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Staff Welfare Expense</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261003</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Mr Ganga R/XXt6j5@pty/RT/YES BANK P/664217400832/ICId272183749b74c1b838587337aa66cd6 Zomato Online Order UPI/Zomato Onl/XX.rzp@rxaxis/UPI/AXIS</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>70.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261003</DATE>
+                <INSTRUMENTDATE>20261003</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Staff Welfare Expense</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Staff Welfare Expense</BANKPARTYNAME>
+                <AMOUNT>70.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Staff Welfare Expense</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-70.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261003</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>11</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261003</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/664202629502/ICIde7ade3269ae4539a9c9deb2be4fd e9f Kanti sweets Gunjur Village</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>614.94</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261003</DATE>
+                <INSTRUMENTDATE>20261003</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>614.94</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-614.94</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261004</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>12</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261004</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Kanti swee/XX2747@ybl/Sweets/YES BANK L/664332831513/ICI743ccf89b8594778a375f9247b1f5961 WISE PAYMENTS LIMITED MOBILE BANKING</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>282.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261004</DATE>
+                <INSTRUMENTDATE>20261004</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>282.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-282.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261006</DATE>
+            <VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>13</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>ICICI Bank A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261006</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>MMT/IMPS/627919558035/RDA Vostro FIR /WISE PAYME/HDFC Bank pradeep pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>5796.46</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-5796.46</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261006</DATE>
+                <INSTRUMENTDATE>20261006</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>-5796.46</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261006</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>14</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261006</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/pradeep pa/XX8104@ybl/RT/YES BANK L/664585095125/ICI5fca71ec3c8a4d1bae80c952befead29 elior india catering llp UPI/elior indi/XX9533@ptybl/UPI/YES BANK</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>60.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261006</DATE>
+                <INSTRUMENTDATE>20261006</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>60.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-60.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261007</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>15</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261007</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>L/664698686303/PYTM6100723106144054333XXXXXXXXX XXX WISE PAYMENTS LIMITED MOBILE BANKING</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>16.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261007</DATE>
+                <INSTRUMENTDATE>20261007</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>16.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-16.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261007</DATE>
+            <VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>16</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>ICICI Bank A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261007</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>MMT/IMPS/628014536287/RDA Vostro FIR /WISE PAYME/HDFC Bank BENIVO LIMITED</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>5590.84</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-5590.84</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261007</DATE>
+                <INSTRUMENTDATE>20261007</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>-5590.84</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261007</DATE>
+            <VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>17</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>ICICI Bank A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261007</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>RTGS-HDFCR52026100768819855-BENIVO LIMITED-50200016028831-HDFC0000240 pradeep pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>800000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-800000.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261007</DATE>
+                <INSTRUMENTDATE>20261007</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>-800000.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261007</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>18</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261007</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/pradeep pa/XX8104@ybl/RT/YES BANK L/628016657251/ICId090c345eb6d4d549decec262a06dc26</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>70.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261007</DATE>
+                <INSTRUMENTDATE>20261007</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>70.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-70.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261008</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>19</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261008</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/628177770254/ICI4a9abefe7b054c23b7ffc964332cde 01 Ganga ram yadav pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>10000.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261008</DATE>
+                <INSTRUMENTDATE>20261008</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>10000.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-10000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261011</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>20</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261011</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Ganga ram/XX2303@ybl/RT/YES BANK L/665046876336/ICI754891c034fa40de9b8f08e870dc91d6 Ganga ram yadav pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>70.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261011</DATE>
+                <INSTRUMENTDATE>20261011</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>70.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-70.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261013</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>21</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261013</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Ganga ram/XX2303@ybl/RT/YES BANK L/665236789075/ICI8676d0ad4e3a4dc5b086c2a9047ebd01 elior india catering llp UPI/elior indi/XX9533@ptybl/UPI/YES BANK</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>60.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261013</DATE>
+                <INSTRUMENTDATE>20261013</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>60.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-60.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261014</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>22</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261014</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>L/628734026682/PYTM6101423622883614777XXXXXXXXX XXX pradeep pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>48.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261014</DATE>
+                <INSTRUMENTDATE>20261014</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>48.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-48.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261015</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>23</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261015</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/pradeep pa/XX8715@ybl/RT/YES BANK L/665465137497/ICIcb1b892a0d6e4020a1faf7b8dfc1719a MYNTRA UPI/MYNTRA/XXpayu@hdfcban/Payment fo/HDFC</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>70.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261015</DATE>
+                <INSTRUMENTDATE>20261015</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>70.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-70.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261018</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>24</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261018</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/665763646200/PPPL313556288691810261026216ad 45175 Mr Ganga Ram Yadav</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>2793.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261018</DATE>
+                <INSTRUMENTDATE>20261018</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>2793.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-2793.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261020</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>25</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261020</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Mr Ganga R/XX1rsy@pty/RT/YES BANK P/665935218844/ICIaf13ade2743a411bbe1b076a69fa25d4 MUKESH KUMAR SO PRAKASH UPI/MUKESH KUM/XX1023@ybl/Plants/Punjab</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>130.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261020</DATE>
+                <INSTRUMENTDATE>20261020</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>130.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-130.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261020</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>26</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261020</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>Nat/665978779775/ICI20100a6b1db54d2ab804ab7d819007 50 Ganga ram yadav pan shop</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>1700.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261020</DATE>
+                <INSTRUMENTDATE>20261020</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>1700.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-1700.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261023</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>27</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261023</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/Ganga ram/XX2303@ybl/RT/YES BANK L/629668132553/ICI8be880cb97b74901b63248fe76068e8d BISHAKHA AGARWAL</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>70.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261023</DATE>
+                <INSTRUMENTDATE>20261023</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>70.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-70.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261024</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>28</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261024</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>BANK/629757743681/ICIc9747afca42a4e9cb6b67942057cb a8d RAM UDHAGAR SINGH</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>6272.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261024</DATE>
+                <INSTRUMENTDATE>20261024</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>6272.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-6272.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261027</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>29</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261027</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/RAM UDHAGA/XXb0mz@pty/RT/YES BANK P/630035000776/ICIb652be58e959452d99d0d23110db4cad</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>130.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261027</DATE>
+                <INSTRUMENTDATE>20261027</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>130.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-130.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261030</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>30</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261030</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>NET BANKING INF/INFT/000095083123/Benivo/Self JAY PRAKASH PAN SHOP</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>750000.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261030</DATE>
+                <INSTRUMENTDATE>20261030</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Inter Bank Transfer</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>750000.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-750000.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+        <TALLYMESSAGE xmlns:UDF="TallyUDF">
+          <VOUCHER VCHTYPE="Payment" ACTION="Create" OBJVIEW="Accounting Voucher View">
+            <DATE>20261031</DATE>
+            <VOUCHERTYPENAME>Payment</VOUCHERTYPENAME>
+            <VOUCHERNUMBER>31</VOUCHERNUMBER>
+            <PARTYLEDGERNAME>Suspense A/c</PARTYLEDGERNAME>
+            <EFFECTIVEDATE>20261031</EFFECTIVEDATE>
+            <HASCASHFLOW>Yes</HASCASHFLOW>
+            <PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>
+            <REFERENCE></REFERENCE>
+            <NARRATION>UPI/JAY PRAKAS/XX4488@ybl/RT/YES BANK L/667004547924/ICIe172b929c715408a909227895d20942b</NARRATION>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>ICICI Bank A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>
+              <AMOUNT>130.00</AMOUNT>
+              <BANKALLOCATIONS.LIST>
+                <DATE>20261031</DATE>
+                <INSTRUMENTDATE>20261031</INSTRUMENTDATE>
+                <PAYMENTFAVOURING>Suspense A/c</PAYMENTFAVOURING>
+                <TRANSACTIONTYPE>Cheque</TRANSACTIONTYPE>
+                <PAYMENTMODE>Transacted</PAYMENTMODE>
+                <BANKPARTYNAME>Suspense A/c</BANKPARTYNAME>
+                <AMOUNT>130.00</AMOUNT>
+              </BANKALLOCATIONS.LIST>
+            </ALLLEDGERENTRIES.LIST>
+            <ALLLEDGERENTRIES.LIST>
+              <LEDGERNAME>Suspense A/c</LEDGERNAME>
+              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>
+              <AMOUNT>-130.00</AMOUNT>
+            </ALLLEDGERENTRIES.LIST>
+          </VOUCHER>
+        </TALLYMESSAGE>
+      </REQUESTDATA>
+    </IMPORTDATA>
+  </BODY>
+</ENVELOPE>
