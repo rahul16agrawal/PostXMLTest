@@ -84,5 +84,63 @@ namespace PostXMLTest.Services.Parsers
             Assert.NotNull(doc);
             Assert.Equal(1442, doc.Transactions.Count);
         }
+
+        [Fact]
+        public void Parse_Statement002_ExtractsAll163Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Statement_002.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "IDBI",
+                DisplayName = "IDBI Bank",
+                DateFormat = "dd/MM/yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("IDBI Bank", doc.BankName);
+            Assert.Equal("0719102000017897", doc.AccountNumber);
+            Assert.Equal("ANURAG ENTERPRISES", doc.AccountHolderName);
+            Assert.Equal("IBKL0000719", doc.IfscCode);
+            Assert.Equal(163, doc.Transactions.Count);
+            Assert.Equal(4360.55m, doc.OpeningBalance);
+            Assert.Equal(3707.46m, doc.ClosingBalance);
+        }
+
+        [Fact]
+        public void Parse_Statement003_ExtractsAll294Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Statement_003.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "IDBI",
+                DisplayName = "IDBI Bank",
+                DateFormat = "dd/MM/yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("IDBI Bank", doc.BankName);
+            Assert.Equal("1075653800000198", doc.AccountNumber);
+            Assert.Equal("ANIKA COAL BRIQUETTE", doc.AccountHolderName);
+            Assert.Equal("IBKL0001075", doc.IfscCode);
+            Assert.Equal(294, doc.Transactions.Count);
+            Assert.Equal(-8994466.08m, doc.OpeningBalance);
+            Assert.Equal(-8190748.38m, doc.ClosingBalance);
+        }
     }
 }
