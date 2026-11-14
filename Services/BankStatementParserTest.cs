@@ -297,7 +297,8 @@ namespace PostXMLTest.Services
             Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
 
             var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
-            var detector = new BankDetectorService(detectorLogger);
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
             var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
             var reconEngine = new MathReconciliationEngine(reconLogger);
             var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
@@ -322,7 +323,8 @@ namespace PostXMLTest.Services
             Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
 
             var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
-            var detector = new BankDetectorService(detectorLogger);
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
             var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
             var reconEngine = new MathReconciliationEngine(reconLogger);
             var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
@@ -465,6 +467,154 @@ namespace PostXMLTest.Services
 
             Assert.NotNull(doc);
             Assert.Equal(3, doc.TotalPages);
+        }
+
+        [Fact]
+        public void ParsePdf_RealBandhanStatement_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "BandhanBank", "BandhanBank_Statement_001.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream);
+
+            Assert.NotNull(doc);
+            Assert.Equal("Bandhan Bank", doc.BankName);
+            Assert.Equal("20100083106505", doc.AccountNumber);
+            Assert.Equal("M/S BIMLA ENTERPRISES", doc.AccountHolderName);
+            Assert.Equal(433, doc.Transactions.Count);
+            Assert.NotNull(doc.Reconciliation);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+        }
+
+        [Fact]
+        public void ParsePdf_RealPnbStatement_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "PNBBank", "PNBBank_Statement_001.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream, password: "9881002100002425");
+
+            Assert.NotNull(doc);
+            Assert.Equal("Punjab National Bank", doc.BankName);
+            Assert.Equal("9881002100002425", doc.AccountNumber);
+            Assert.Equal("ANUSHKA COAL BRIQUETTE", doc.AccountHolderName);
+            Assert.Equal(367, doc.Transactions.Count);
+            Assert.NotNull(doc.Reconciliation);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+        }
+
+        [Fact]
+        public void ParsePdf_RealIdbiStatement004_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Statement_004.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream);
+
+            Assert.NotNull(doc);
+            Assert.Equal("IDBI Bank", doc.BankName);
+            Assert.Equal("1075102000012148", doc.AccountNumber);
+            Assert.Equal(1202, doc.Transactions.Count);
+            Assert.Equal(23379301.40m, doc.TotalDeposits);
+            Assert.Equal(23811498.41m, doc.TotalWithdrawals);
+            Assert.NotNull(doc.Reconciliation);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+        }
+
+        [Fact]
+        public void ParsePdf_RealIciciStatement003_EndToEndSuccess()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_003.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            using var stream = File.OpenRead(pdfPath);
+            var doc = parser.ParsePdf(stream);
+
+            Assert.NotNull(doc);
+            Assert.Equal("ICICI Bank", doc.BankName);
+            Assert.Equal("162101508552", doc.AccountNumber);
+            Assert.Equal(166, doc.Transactions.Count);
+            Assert.NotNull(doc.Reconciliation);
+            Assert.True(doc.Reconciliation.IsFullyReconciled);
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+        }
+
+        [Theory]
+        [InlineData("BANDHAN", "Bandhan Bank")]
+        [InlineData("PNB", "Punjab National Bank")]
+        [InlineData("ICICI", "ICICI Bank")]
+        [InlineData("IDBI", "IDBI Bank")]
+        [InlineData("AXIS", "Axis Bank")]
+        [InlineData("HDFC", "HDFC Bank")]
+        [InlineData("SBI", "State Bank of India")]
+        [InlineData("KOTAK", "Kotak Mahindra Bank")]
+        [InlineData("IOB", "Indian Overseas Bank")]
+        public void RegisterDefaultParsers_WiresAllMajorBankParsersCorrectly(string bankCode, string expectedDisplayName)
+        {
+            var detectorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankDetectorService>.Instance;
+            var registry = new BankProfileRegistry(Microsoft.Extensions.Logging.Abstractions.NullLogger<BankProfileRegistry>.Instance);
+            var detector = new BankDetectorService(detectorLogger, registry);
+            var reconLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MathReconciliationEngine>.Instance;
+            var reconEngine = new MathReconciliationEngine(reconLogger);
+            var parserLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<BankStatementParser>.Instance;
+
+            var parser = new BankStatementParser(detector, reconEngine, parserLogger);
+
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+            var doc = parser.ParsePdf(ms, password: null, bankCodeOverride: bankCode);
+
+            Assert.NotNull(doc);
+            Assert.Equal(expectedDisplayName, doc.BankName);
         }
     }
 }

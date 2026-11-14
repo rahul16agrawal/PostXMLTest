@@ -6,6 +6,7 @@ using PostXML.Models;
 using PostXML.Services;
 using PostXML.Services.Parsers;
 using UglyToad.PdfPig;
+using UglyToad.PdfPig.Writer;
 using Xunit;
 
 namespace PostXMLTest.Services.Parsers
@@ -171,6 +172,114 @@ namespace PostXMLTest.Services.Parsers
             Assert.Equal(86, doc.Transactions.Count);
             Assert.Equal(321974.57m, doc.TotalDeposits);
             Assert.Equal(348194.84m, doc.TotalWithdrawals);
+        }
+
+        [Fact]
+        public void Parse_WithNullDefinition_UsesDefaultConfigWithoutThrowing()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_001.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                Definition = null
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal(31, doc.Transactions.Count);
+        }
+
+        [Fact]
+        public void Parse_EmptyPdfDocument_ReturnsEmptyStatementWithoutThrowing()
+        {
+            var builder = new PdfDocumentBuilder();
+            builder.AddPage(UglyToad.PdfPig.Content.PageSize.A4);
+            byte[] pdfBytes = builder.Build();
+
+            using var ms = new MemoryStream(pdfBytes);
+            using var pdfDoc = PdfDocument.Open(ms);
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank"
+            };
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Empty(doc.Transactions);
+            Assert.Equal(0m, doc.OpeningBalance);
+            Assert.Equal(0m, doc.ClosingBalance);
+            Assert.Equal(0m, doc.TotalDeposits);
+            Assert.Equal(0m, doc.TotalWithdrawals);
+        }
+
+        [Theory]
+        [InlineData("ICICIBank_Statement_003.pdf", 166)]
+        [InlineData("ICICIBank_Statement_004.pdf", 88)]
+        [InlineData("ICICIBank_Statement_005.pdf", 86)]
+        public void Parse_NetBankingLayout_ZeroDiscrepancyAndTotalsReconciliation(string fileName, int expectedCount)
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", fileName);
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                DateFormat = "dd.MM.yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.Equal(expectedCount, doc.Transactions.Count);
+
+            decimal expectedDeposits = doc.Transactions.Where(t => t.Type == TransactionType.Deposit).Sum(t => t.DepositAmount);
+            decimal expectedWithdrawals = doc.Transactions.Where(t => t.Type == TransactionType.Withdrawal).Sum(t => t.WithdrawalAmount);
+
+            Assert.Equal(expectedDeposits, doc.TotalDeposits);
+            Assert.Equal(expectedWithdrawals, doc.TotalWithdrawals);
+            Assert.Equal(doc.ClosingBalance, doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals);
+        }
+
+        [Fact]
+        public void Parse_NetBankingLayout_Statement003_ChequeNumberFiltersDashAndNa()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "ICICIBank", "ICICIBank_Statement_003.pdf");
+
+            var profile = new BankProfile
+            {
+                BankCode = "ICICI",
+                DisplayName = "ICICI Bank",
+                DateFormat = "dd.MM.yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            foreach (var txn in doc.Transactions)
+            {
+                if (!string.IsNullOrEmpty(txn.ReferenceNumber))
+                {
+                    Assert.NotEqual("-", txn.ReferenceNumber);
+                    Assert.False(txn.ReferenceNumber.Equals("NA", StringComparison.OrdinalIgnoreCase));
+                }
+            }
         }
     }
 }

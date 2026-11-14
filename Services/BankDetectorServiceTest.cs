@@ -82,6 +82,32 @@ namespace PostXMLTest.Services
         }
 
         [Fact]
+        public void DetectBank_BandhanSignatures_ReturnsBandhanProfile()
+        {
+            string sample = "BANDHAN BANK LIMITED\nIFSC Code: BDBL0001432\nAccount Statement Period";
+
+            var profile = _detector.DetectBank(sample);
+
+            Assert.NotNull(profile);
+            Assert.Equal("BANDHAN", profile.BankCode);
+            Assert.Equal("Bandhan Bank", profile.DisplayName);
+            Assert.Equal("BDBL", profile.ExpectedIfscPrefix);
+        }
+
+        [Fact]
+        public void DetectBank_PnbSignatures_ReturnsPnbProfile()
+        {
+            string sample = "PUNJAB NATIONAL BANK\nPUNB0988100\n***Generated through PNB ONE***";
+
+            var profile = _detector.DetectBank(sample);
+
+            Assert.NotNull(profile);
+            Assert.Equal("PNB", profile.BankCode);
+            Assert.Equal("Punjab National Bank", profile.DisplayName);
+            Assert.Equal("PUNB", profile.ExpectedIfscPrefix);
+        }
+
+        [Fact]
         public void DetectBank_KotakSignatures_ReturnsKotakProfile()
         {
             string sample = "KOTAK MAHINDRA BANK LIMITED\nAmount CR/DR";
@@ -128,6 +154,12 @@ namespace PostXMLTest.Services
         [InlineData("kotak", "Kotak Mahindra Bank")]
         [InlineData("IDBI", "IDBI Bank")]
         [InlineData("IOB", "Indian Overseas Bank")]
+        [InlineData("BANDHAN", "Bandhan Bank")]
+        [InlineData("bandhan", "Bandhan Bank")]
+        [InlineData("PNB", "Punjab National Bank")]
+        [InlineData("pnb", "Punjab National Bank")]
+        [InlineData("ICICI", "ICICI Bank")]
+        [InlineData("icici", "ICICI Bank")]
         public void GetProfileByCode_WithValidCode_ReturnsMatchingProfileCaseInsensitively(string bankCode, string expectedDisplayName)
         {
             var profile = _detector.GetProfileByCode(bankCode);
@@ -168,6 +200,9 @@ namespace PostXMLTest.Services
             Assert.Contains(profiles, p => p.BankCode == "KOTAK");
             Assert.Contains(profiles, p => p.BankCode == "IDBI");
             Assert.Contains(profiles, p => p.BankCode == "IOB");
+            Assert.Contains(profiles, p => p.BankCode == "BANDHAN" && p.ExpectedIfscPrefix == "BDBL");
+            Assert.Contains(profiles, p => p.BankCode == "PNB" && p.ExpectedIfscPrefix == "PUNB");
+            Assert.Contains(profiles, p => p.BankCode == "ICICI" && p.ExpectedIfscPrefix == "ICIC");
         }
     }
 }
