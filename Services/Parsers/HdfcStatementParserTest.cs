@@ -146,5 +146,36 @@ namespace PostXMLTest.Services.Parsers
             Assert.True(summary.IsFullyReconciled);
             Assert.Equal(0m, summary.DiscrepancyAmount);
         }
+
+        [Fact]
+        public void Parse_Statement004_ExtractsAllTransactionsAndReconciles()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Statement_004.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "HDFC",
+                DisplayName = "HDFC Bank",
+                DateFormat = "dd/MM/yy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = UglyToad.PdfPig.PdfDocument.Open(stream, new ParsingOptions { Password = "253526429" });
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("50200080140208", doc.AccountNumber);
+            Assert.Equal(196, doc.Transactions.Count);
+            Assert.Equal(226624.06m, doc.OpeningBalance);
+            Assert.Equal(9220.87m, doc.ClosingBalance);
+
+            var engine = new PostXML.Services.MathReconciliationEngine(Microsoft.Extensions.Logging.Abstractions.NullLogger<PostXML.Services.MathReconciliationEngine>.Instance);
+            var summary = engine.Reconcile(doc);
+            Assert.True(summary.IsFullyReconciled);
+            Assert.Equal(0m, summary.DiscrepancyAmount);
+        }
     }
 }

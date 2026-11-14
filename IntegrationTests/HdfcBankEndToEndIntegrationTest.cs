@@ -283,5 +283,84 @@ namespace PostXMLTest.IntegrationTests
             string expectedXml = File.ReadAllText(goldXmlPath);
             Assert.Equal(expectedXml.Trim(), actualXml.Trim());
         }
+
+        [Fact]
+        public void HdfcBank_Statement_004_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 004 test fixture (Yashika Coal Briquette, encrypted with password '253526429')
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Statement_004.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Expected_004.xml");
+
+            string projectRoot = Path.GetFullPath(Path.Combine(basePath, "..", "..", ".."));
+            string sourceXmlPath = Path.Combine(projectRoot, "TestData", "HDFCBank", "HDFCBank_Expected_004.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            // 2. Parse PDF (encrypted with password '253526429')
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.True(_parser.IsPdfEncrypted(stream), "PDF should be detected as encrypted.");
+                doc = _parser.ParsePdf(stream, "253526429");
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("HDFC Bank", doc.BankName);
+            Assert.Equal("50200080140208", doc.AccountNumber);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(196, doc.Transactions.Count);
+            Assert.Equal(226624.06m, doc.OpeningBalance);
+            Assert.Equal(9220.87m, doc.ClosingBalance);
+            Assert.Equal(9891306.44m, doc.TotalDeposits);
+            Assert.Equal(10108709.63m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
+            // 5. Generate Gold Master XML if not present, then assert XML validity
+            string actualXml = _exportService.GenerateTallyXml(doc, "HDFC Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var xDoc = XDocument.Parse(actualXml);
+            var vouchers = xDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(196, vouchers.Count);
+
+            int paymentCount = vouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Payment");
+            int receiptCount = vouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Receipt");
+            int contraCount = vouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Contra");
+
+            Assert.True(paymentCount > 0, "Should contain Payment vouchers");
+            Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
+            Assert.Equal(196, paymentCount + receiptCount + contraCount);
+
+            if (!File.Exists(goldXmlPath))
+            {
+                File.WriteAllText(goldXmlPath, actualXml);
+            }
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            {
+                File.WriteAllText(sourceXmlPath, actualXml);
+            }
+
+            // Compare against Gold Master XML
+            string expectedXml = File.ReadAllText(goldXmlPath);
+            Assert.Equal(expectedXml.Trim(), actualXml.Trim());
+        }
     }
 }
