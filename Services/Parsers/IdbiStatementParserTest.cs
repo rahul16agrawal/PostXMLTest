@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PostXML.Models;
+using PostXML.Services;
 using PostXML.Services.Parsers;
 using UglyToad.PdfPig;
 using Xunit;
@@ -141,6 +142,37 @@ namespace PostXMLTest.Services.Parsers
             Assert.Equal(294, doc.Transactions.Count);
             Assert.Equal(-8994466.08m, doc.OpeningBalance);
             Assert.Equal(-8190748.38m, doc.ClosingBalance);
+        }
+
+        [Fact]
+        public void Parse_Statement004_ExtractsAll1202Transactions()
+        {
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Statement_004.pdf");
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            var profile = new BankProfile
+            {
+                BankCode = "IDBI",
+                DisplayName = "IDBI Bank",
+                DateFormat = "dd/MM/yyyy"
+            };
+
+            using var stream = File.OpenRead(pdfPath);
+            using var pdfDoc = PdfDocument.Open(stream);
+
+            var doc = _parser.Parse(pdfDoc, profile, new List<string>());
+
+            Assert.NotNull(doc);
+            Assert.Equal("IDBI Bank", doc.BankName);
+            Assert.Equal("1075102000012148", doc.AccountNumber);
+            Assert.Equal("ANIKA COAL BRIQUETTE", doc.AccountHolderName);
+            Assert.Equal("IBKL0001075", doc.IfscCode);
+            Assert.Equal(1202, doc.Transactions.Count);
+            Assert.Equal(439063.01m, doc.OpeningBalance);
+            Assert.Equal(6866.00m, doc.ClosingBalance);
+            Assert.Equal(23379301.40m, doc.TotalDeposits);
+            Assert.Equal(23811498.41m, doc.TotalWithdrawals);
         }
     }
 }

@@ -268,5 +268,76 @@ namespace PostXMLTest.IntegrationTests
             string expectedXml = File.ReadAllText(goldXmlPath);
             Assert.Equal(expectedXml.Trim(), actualXml.Trim());
         }
+
+        [Fact]
+        public void IdbiBank_Statement_004_EndToEnd_Reconciles_And_Matches_GoldMasterXml()
+        {
+            // 1. Locate the Statement 004 test fixture (Anika Coal Briquette, 1202 txns)
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Statement_004.pdf");
+            string goldXmlPath = Path.Combine(basePath, "TestData", "IDBIBank", "IDBIBank_Expected_004.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+
+            // 2. Parse PDF (unencrypted)
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                Assert.False(_parser.IsPdfEncrypted(stream), "PDF should be unencrypted.");
+                doc = _parser.ParsePdf(stream);
+            }
+
+            // 3. Assert Metadata & Header Detection
+            Assert.NotNull(doc);
+            Assert.Equal("IDBI Bank", doc.BankName);
+            Assert.Equal("1075102000012148", doc.AccountNumber);
+            Assert.Equal("ANIKA COAL BRIQUETTE", doc.AccountHolderName);
+            Assert.Equal("IBKL0001075", doc.IfscCode);
+
+            // 4. Assert Transaction Volume & Mathematical Continuity
+            Assert.Equal(1202, doc.Transactions.Count);
+            Assert.Equal(439063.01m, doc.OpeningBalance);
+            Assert.Equal(6866.00m, doc.ClosingBalance);
+            Assert.Equal(23379301.40m, doc.TotalDeposits);
+            Assert.Equal(23811498.41m, doc.TotalWithdrawals);
+
+            // Mathematical Balance Equation: Opening + Deposits - Withdrawals == Closing
+            decimal expectedClosing = doc.OpeningBalance + doc.TotalDeposits - doc.TotalWithdrawals;
+            Assert.Equal(doc.ClosingBalance, expectedClosing);
+
+            // Reconciliation Engine State
+            Assert.True(doc.Reconciliation.IsFullyReconciled, "Statement must be 100% mathematically reconciled across all 1202 transactions.");
+            Assert.Equal(0m, doc.Reconciliation.DiscrepancyAmount);
+            Assert.Empty(doc.Reconciliation.MismatchedRowIndices);
+
+            // Assert Line-by-Line Continuity across every single transaction
+            Assert.All(doc.Transactions, txn =>
+            {
+                Assert.True(txn.IsBalanceMatched,
+                    $"Row {txn.RowIndex} failed line-by-line balance match: Bank reported {txn.RunningBalance:F2}, Engine calculated {txn.CalculatedBalance:F2}");
+            });
+
+            // 5. Generate Gold Master XML if not present, then assert XML validity
+            string actualXml = _exportService.GenerateTallyXml(doc, "IDBI Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var xDoc = XDocument.Parse(actualXml);
+            var vouchers = xDoc.Descendants("VOUCHER").ToList();
+            Assert.Equal(1202, vouchers.Count);
+
+            if (!File.Exists(goldXmlPath))
+            {
+                File.WriteAllText(goldXmlPath, actualXml);
+                string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
+                if (Directory.Exists(sourceTestDataDir))
+                {
+                    File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_004.xml"), actualXml);
+                }
+            }
+
+            // Compare against Gold Master XML
+            string expectedXml = File.ReadAllText(goldXmlPath);
+            Assert.Equal(expectedXml.Trim(), actualXml.Trim());
+        }
     }
 }
