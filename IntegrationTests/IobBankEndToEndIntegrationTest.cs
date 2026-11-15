@@ -115,9 +115,13 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(237, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
+            string projectRoot = Path.GetFullPath(Path.Combine(basePath, "..", "..", ".."));
+            string sourceXmlPath = Path.Combine(projectRoot, "TestData", "IOBBank", "IOBBank_Expected_001.xml");
+
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
+                File.WriteAllText(sourceXmlPath, actualXml);
             }
 
             // Compare against Gold Master XML

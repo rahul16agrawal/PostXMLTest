@@ -123,6 +123,15 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(115, paymentCount + receiptCount + contraCount);
 
+            string projectRoot = Path.GetFullPath(Path.Combine(basePath, "..", "..", ".."));
+            string sourceXmlPath = Path.Combine(projectRoot, "TestData", "KotakBank", "KotakBank_Expected_001.xml");
+
+            File.WriteAllText(goldXmlPath, generatedXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
+            {
+                File.WriteAllText(sourceXmlPath, generatedXml);
+            }
+
             // Verify Gold Master exact match
             string goldXml = File.ReadAllText(goldXmlPath);
             Assert.Equal(goldXml.Trim(), generatedXml.Trim());

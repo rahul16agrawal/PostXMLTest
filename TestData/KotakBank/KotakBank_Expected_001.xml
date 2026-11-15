@@ -12,24 +12,45 @@
       </REQUESTDESC>
       <REQUESTDATA>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="Suspense A/c" RESERVEDNAME="">
+          <LEDGER NAME="Suspense A/c" ACTION="Create" RESERVEDNAME="">
+            <NAME>Suspense A/c</NAME>
             <PARENT>Suspense A/c</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>Suspense A/c</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="Bank Charges" RESERVEDNAME="">
+          <LEDGER NAME="Bank Charges" ACTION="Create" RESERVEDNAME="">
+            <NAME>Bank Charges</NAME>
             <PARENT>Indirect Expenses</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>Bank Charges</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="Kotak Mahindra Bank Ledger" RESERVEDNAME="">
+          <LEDGER NAME="Kotak Mahindra Bank Ledger" ACTION="Create" RESERVEDNAME="">
+            <NAME>Kotak Mahindra Bank Ledger</NAME>
             <PARENT>Bank Accounts</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>Kotak Mahindra Bank Ledger</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">

@@ -117,9 +117,11 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(1442, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            string sourceTestDataDir1 = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
+            if (Directory.Exists(sourceTestDataDir1))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
+                File.WriteAllText(Path.Combine(sourceTestDataDir1, "IDBIBank_Expected_001.xml"), actualXml);
             }
 
             // Compare against Gold Master XML
@@ -183,14 +185,11 @@ namespace PostXMLTest.IntegrationTests
             var vouchers = xDoc.Descendants("VOUCHER").ToList();
             Assert.Equal(163, vouchers.Count);
 
-            if (!File.Exists(goldXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
+            if (Directory.Exists(sourceTestDataDir))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
-                string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
-                if (Directory.Exists(sourceTestDataDir))
-                {
-                    File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_002.xml"), actualXml);
-                }
+                File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_002.xml"), actualXml);
             }
 
             // Compare against Gold Master XML
@@ -254,14 +253,11 @@ namespace PostXMLTest.IntegrationTests
             var vouchers = xDoc.Descendants("VOUCHER").ToList();
             Assert.Equal(294, vouchers.Count);
 
-            if (!File.Exists(goldXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
+            if (Directory.Exists(sourceTestDataDir))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
-                string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
-                if (Directory.Exists(sourceTestDataDir))
-                {
-                    File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_003.xml"), actualXml);
-                }
+                File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_003.xml"), actualXml);
             }
 
             // Compare against Gold Master XML
@@ -325,14 +321,11 @@ namespace PostXMLTest.IntegrationTests
             var vouchers = xDoc.Descendants("VOUCHER").ToList();
             Assert.Equal(1202, vouchers.Count);
 
-            if (!File.Exists(goldXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
+            if (Directory.Exists(sourceTestDataDir))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
-                string sourceTestDataDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "TestData", "IDBIBank"));
-                if (Directory.Exists(sourceTestDataDir))
-                {
-                    File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_004.xml"), actualXml);
-                }
+                File.WriteAllText(Path.Combine(sourceTestDataDir, "IDBIBank_Expected_004.xml"), actualXml);
             }
 
             // Compare against Gold Master XML

@@ -221,5 +221,46 @@ namespace PostXMLTest.Services
             var rcptBankEntry = rcptVoucher.Descendants("ALLLEDGERENTRIES.LIST").FirstOrDefault(e => (string?)e.Element("LEDGERNAME") == customLedgerName);
             rcptBankEntry.Should().NotBeNull();
         }
+
+        [Fact]
+        public void GenerateTallyXml_LedgerMasters_IncludeActionNameAndLanguageNameList()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "HDFC Bank",
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 4, 2),
+                        WithdrawalAmount = 130130m,
+                        TargetLedgerName = "Suspense",
+                        Type = TransactionType.Withdrawal
+                    }
+                }
+            };
+
+            string xml = _service.GenerateTallyXml(statement, "HDFC Bank A/c");
+            var xdoc = System.Xml.Linq.XDocument.Parse(xml);
+
+            var ledgers = xdoc.Descendants("LEDGER").ToList();
+            ledgers.Should().HaveCount(2); // Target ledger + Bank ledger
+
+            foreach (var ledger in ledgers)
+            {
+                string expectedName = (string)ledger.Attribute("NAME")!;
+                ledger.Attribute("ACTION")!.Value.Should().Be("Create");
+                ledger.Element("NAME")!.Value.Should().Be(expectedName);
+
+                var langList = ledger.Element("LANGUAGENAME.LIST");
+                langList.Should().NotBeNull();
+                langList!.Element("LANGUAGEID")!.Value.Trim().Should().Be("1033");
+
+                var nameList = langList.Element("NAME.LIST");
+                nameList.Should().NotBeNull();
+                nameList!.Attribute("TYPE")!.Value.Should().Be("String");
+                nameList.Element("NAME")!.Value.Should().Be(expectedName);
+            }
+        }
     }
 }

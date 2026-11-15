@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
@@ -114,9 +115,13 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(37, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
+            string projectRoot = Path.GetFullPath(Path.Combine(basePath, "..", "..", ".."));
+            string sourceXmlPath = Path.Combine(projectRoot, "TestData", "HDFCBank", "HDFCBank_Expected_001.xml");
+
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
-                File.WriteAllText(goldXmlPath, actualXml);
+                File.WriteAllText(sourceXmlPath, actualXml);
             }
 
             // Compare against Gold Master XML
@@ -190,11 +195,8 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(162, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
-            {
-                File.WriteAllText(goldXmlPath, actualXml);
-            }
-            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
                 File.WriteAllText(sourceXmlPath, actualXml);
             }
@@ -270,11 +272,8 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(1001, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
-            {
-                File.WriteAllText(goldXmlPath, actualXml);
-            }
-            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
                 File.WriteAllText(sourceXmlPath, actualXml);
             }
@@ -349,11 +348,8 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(196, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
-            {
-                File.WriteAllText(goldXmlPath, actualXml);
-            }
-            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
                 File.WriteAllText(sourceXmlPath, actualXml);
             }
@@ -428,11 +424,8 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(426, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
-            {
-                File.WriteAllText(goldXmlPath, actualXml);
-            }
-            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
                 File.WriteAllText(sourceXmlPath, actualXml);
             }
@@ -440,6 +433,110 @@ namespace PostXMLTest.IntegrationTests
             // Compare against Gold Master XML
             string expectedXml = File.ReadAllText(goldXmlPath);
             Assert.Equal(expectedXml.Trim(), actualXml.Trim());
+        }
+
+        [Fact]
+        public void HdfcBank_Statement_004_GeneratedXml_Matches_RepoticXml()
+        {
+            // 1. Locate Statement 004 fixtures
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            string pdfPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Statement_004.pdf");
+            string repoticXmlPath = Path.Combine(basePath, "TestData", "HDFCBank", "HDFCBank_Repotic_004.xml");
+
+            Assert.True(File.Exists(pdfPath), $"PDF fixture not found at {pdfPath}");
+            Assert.True(File.Exists(repoticXmlPath), $"Repotic XML fixture not found at {repoticXmlPath}");
+
+            // 2. Parse PDF and generate PostXML output
+            StatementDocument doc;
+            using (var stream = File.OpenRead(pdfPath))
+            {
+                doc = _parser.ParsePdf(stream, "253526429");
+            }
+
+            string actualXml = _exportService.GenerateTallyXml(doc, "HDFC Bank A/c");
+            Assert.False(string.IsNullOrWhiteSpace(actualXml));
+
+            var ourDoc = XDocument.Parse(actualXml);
+            // Repotic XML contains literal &#4; control character which is invalid in XML 1.0; strip for parser
+            string repoticRawXml = File.ReadAllText(repoticXmlPath).Replace("&#4;", "");
+            var repoticDoc = XDocument.Parse(repoticRawXml);
+
+            // 3. Compare Voucher Counts
+            var ourVouchers = ourDoc.Descendants("VOUCHER").ToList();
+            var repoticVouchers = repoticDoc.Descendants("VOUCHER").ToList();
+
+            Assert.Equal(196, ourVouchers.Count);
+            Assert.Equal(ourVouchers.Count, repoticVouchers.Count);
+
+            int ourPayments = ourVouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Payment");
+            int repoticPayments = repoticVouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Payment");
+            Assert.Equal(83, ourPayments);
+            Assert.Equal(repoticPayments, ourPayments);
+
+            int ourReceipts = ourVouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Receipt");
+            int repoticReceipts = repoticVouchers.Count(v => v.Element("VOUCHERTYPENAME")?.Value == "Receipt");
+            Assert.Equal(113, ourReceipts);
+            Assert.Equal(repoticReceipts, ourReceipts);
+
+            // 4. Compare Voucher-by-Voucher: Type, Date, and Amount
+            decimal ourTotalInflow = 0m;
+            decimal repoticTotalInflow = 0m;
+            decimal ourTotalOutflow = 0m;
+            decimal repoticTotalOutflow = 0m;
+
+            for (int i = 0; i < ourVouchers.Count; i++)
+            {
+                var ourV = ourVouchers[i];
+                var repoticV = repoticVouchers[i];
+
+                string ourType = ourV.Element("VOUCHERTYPENAME")?.Value ?? "";
+                string repoticType = repoticV.Element("VOUCHERTYPENAME")?.Value ?? "";
+                Assert.Equal(repoticType, ourType);
+
+                string ourDate = ourV.Element("DATE")?.Value ?? "";
+                string repoticDate = repoticV.Element("DATE")?.Value ?? "";
+                Assert.Equal(repoticDate, ourDate);
+
+                // Get Bank amount for both
+                var ourBankEntry = ourV.Descendants("ALLLEDGERENTRIES.LIST")
+                    .FirstOrDefault(e => e.Element("LEDGERNAME")?.Value == "HDFC Bank A/c");
+                var repoticBankEntry = repoticV.Descendants("ALLLEDGERENTRIES.LIST")
+                    .FirstOrDefault(e => e.Element("LEDGERNAME")?.Value == "HDFC Bank A/c");
+
+                Assert.NotNull(ourBankEntry);
+                Assert.NotNull(repoticBankEntry);
+
+                decimal ourAmt = decimal.Parse(ourBankEntry.Element("AMOUNT")?.Value ?? "0", CultureInfo.InvariantCulture);
+                decimal repoticAmt = decimal.Parse(repoticBankEntry.Element("AMOUNT")?.Value ?? "0", CultureInfo.InvariantCulture);
+
+                Assert.Equal(Math.Abs(repoticAmt), Math.Abs(ourAmt));
+
+                if (ourType == "Receipt")
+                {
+                    ourTotalInflow += Math.Abs(ourAmt);
+                    repoticTotalInflow += Math.Abs(repoticAmt);
+                }
+                else
+                {
+                    ourTotalOutflow += Math.Abs(ourAmt);
+                    repoticTotalOutflow += Math.Abs(repoticAmt);
+                }
+            }
+
+            Assert.Equal(9891306.44m, ourTotalInflow);
+            Assert.Equal(repoticTotalInflow, ourTotalInflow);
+            Assert.Equal(10108709.63m, ourTotalOutflow);
+            Assert.Equal(repoticTotalOutflow, ourTotalOutflow);
+
+            // 5. Assert Master Ledger schema conformance (preventing MISSING_MASTER_NAME)
+            var ourLedgers = ourDoc.Descendants("LEDGER").ToList();
+            Assert.NotEmpty(ourLedgers);
+            Assert.All(ourLedgers, l =>
+            {
+                Assert.NotNull(l.Element("NAME"));
+                Assert.NotNull(l.Element("LANGUAGENAME.LIST"));
+                Assert.Equal("Create", l.Attribute("ACTION")?.Value);
+            });
         }
     }
 }

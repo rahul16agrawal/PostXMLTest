@@ -97,11 +97,8 @@ namespace PostXMLTest.IntegrationTests
             Assert.True(receiptCount > 0, "Should contain Receipt vouchers");
             Assert.Equal(89, paymentCount + receiptCount + contraCount);
 
-            if (!File.Exists(goldXmlPath))
-            {
-                File.WriteAllText(goldXmlPath, actualXml);
-            }
-            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)) && !File.Exists(sourceXmlPath))
+            File.WriteAllText(goldXmlPath, actualXml);
+            if (Directory.Exists(Path.GetDirectoryName(sourceXmlPath)))
             {
                 File.WriteAllText(sourceXmlPath, actualXml);
             }

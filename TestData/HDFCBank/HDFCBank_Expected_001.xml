@@ -12,24 +12,45 @@
       </REQUESTDESC>
       <REQUESTDATA>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="Suspense A/c" RESERVEDNAME="">
+          <LEDGER NAME="Suspense A/c" ACTION="Create" RESERVEDNAME="">
+            <NAME>Suspense A/c</NAME>
             <PARENT>Suspense A/c</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>Suspense A/c</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="Salary Expense" RESERVEDNAME="">
+          <LEDGER NAME="Salary Expense" ACTION="Create" RESERVEDNAME="">
+            <NAME>Salary Expense</NAME>
             <PARENT>Indirect Expenses</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>Salary Expense</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
-          <LEDGER NAME="HDFC Bank A/c" RESERVEDNAME="">
+          <LEDGER NAME="HDFC Bank A/c" ACTION="Create" RESERVEDNAME="">
+            <NAME>HDFC Bank A/c</NAME>
             <PARENT>Bank Accounts</PARENT>
             <ISBILLWISEON>No</ISBILLWISEON>
             <AFFECTSSTOCK>No</AFFECTSSTOCK>
+            <LANGUAGENAME.LIST>
+              <NAME.LIST TYPE="String">
+                <NAME>HDFC Bank A/c</NAME>
+              </NAME.LIST>
+              <LANGUAGEID> 1033</LANGUAGEID>
+            </LANGUAGENAME.LIST>
           </LEDGER>
         </TALLYMESSAGE>
         <TALLYMESSAGE xmlns:UDF="TallyUDF">
