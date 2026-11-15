@@ -1554,6 +1554,98 @@ namespace PostXMLTest.ViewModels
             _viewModel.ProcessingStatusDetails.Should().Contain("Extracting tabular coordinates");
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void StartProcessingTimer_WithNullOrWhitespaceFilePath_LeavesFileNameEmpty(string? filePath)
+        {
+            _viewModel.StartProcessingTimer(filePath, "Title", "Details");
+
+            _viewModel.ProcessingFileName.Should().BeEmpty();
+            _viewModel.ProcessingStatusTitle.Should().Be("Title");
+            _viewModel.ProcessingStatusDetails.Should().Be("Details");
+
+            _viewModel.StopProcessingTimer();
+        }
+
+        [Fact]
+        public void StartProcessingTimer_CalledRepeatedly_CancelsPreviousTimerAndRestartsWithoutException()
+        {
+            var act = () =>
+            {
+                _viewModel.StartProcessingTimer(@"C:\dir\statement1.pdf", "Title 1", "Details 1");
+                _viewModel.StartProcessingTimer(@"C:\dir\statement2.pdf", "Title 2", "Details 2");
+                _viewModel.StartProcessingTimer(@"C:\dir\statement3.pdf", "Title 3", "Details 3");
+            };
+
+            act.Should().NotThrow();
+            _viewModel.ProcessingFileName.Should().Be("statement3.pdf");
+            _viewModel.ProcessingStatusTitle.Should().Be("Title 3");
+            _viewModel.ProcessingStatusDetails.Should().Be("Details 3");
+
+            _viewModel.StopProcessingTimer();
+        }
+
+        [Fact]
+        public void StopProcessingTimer_WhenNeverStartedOrCalledRepeatedly_IsSafeAndIdempotent()
+        {
+            var act = () =>
+            {
+                _viewModel.StopProcessingTimer();
+                _viewModel.StopProcessingTimer();
+                _viewModel.StopProcessingTimer();
+            };
+
+            act.Should().NotThrow();
+        }
+
+        [Fact]
+        public async Task LoadStatementFileAsync_WhenExceptionThrownDuringParsing_GuaranteesStopProcessingTimerAndResetsIsProcessing()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                _parserMock.Setup(p => p.ParsePdf(It.IsAny<Stream>(), It.IsAny<string?>(), It.IsAny<string?>()))
+                    .Throws(new InvalidOperationException("Corrupt PDF content"));
+
+                await _viewModel.LoadStatementFileAsync(tempFile);
+
+                _viewModel.IsProcessing.Should().BeFalse();
+                _viewModel.ErrorMessage.Should().Contain("Failed to parse bank statement");
+            }
+            finally
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
+
+        [Fact]
+        public async Task ExportTallyXmlAsync_WhenExceptionThrown_GuaranteesStopProcessingTimerAndResetsIsProcessing()
+        {
+            var doc = new StatementDocument
+            {
+                BankName = "HDFC Bank",
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = DateTime.Today, DepositAmount = 100m, Type = TransactionType.Deposit }
+                }
+            };
+            _viewModel.CurrentDocument = doc;
+            _viewModel.Transactions.Add(doc.Transactions[0]);
+
+            _fileDialogMock.Setup(d => d.SaveTallyXmlFileDialog(It.IsAny<string>()))
+                .Returns(@"C:\exports\tally.xml");
+
+            _tallyXmlExportMock.Setup(t => t.GenerateTallyXml(It.IsAny<StatementDocument>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Throws(new InvalidOperationException("Disk full exception"));
+
+            await _viewModel.ExportTallyXmlAsync();
+
+            _viewModel.IsProcessing.Should().BeFalse();
+            _viewModel.ErrorMessage.Should().Contain("Failed to export Tally XML: Disk full exception");
+        }
+
         #endregion
     }
 }

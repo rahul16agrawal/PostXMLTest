@@ -262,5 +262,125 @@ namespace PostXMLTest.Services
                 nameList.Element("NAME")!.Value.Should().Be(expectedName);
             }
         }
+
+        [Fact]
+        public void GenerateTallyXml_LedgerMasters_XmlEscapesSpecialCharactersInNames()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "HDFC Bank",
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 9, 1),
+                        DepositAmount = 1000m,
+                        TargetLedgerName = "Sharma & Sons <Pvt> \"Ltd\"",
+                        RawNarration = "Invoice & Settlement",
+                        Type = TransactionType.Deposit
+                    }
+                }
+            };
+
+            string bankLedgerName = "HDFC & Standard Bank (Joint)";
+            string xml = _service.GenerateTallyXml(statement, bankLedgerName);
+
+            // Verify XML is well-formed and parses cleanly
+            var act = () => System.Xml.Linq.XDocument.Parse(xml);
+            act.Should().NotThrow();
+
+            var xdoc = act();
+            var ledgers = xdoc.Descendants("LEDGER").ToList();
+            ledgers.Should().HaveCount(2);
+
+            var partyLedger = ledgers.FirstOrDefault(l => (string?)l.Attribute("NAME") == "Sharma & Sons <Pvt> \"Ltd\"");
+            partyLedger.Should().NotBeNull();
+            partyLedger!.Element("NAME")!.Value.Should().Be("Sharma & Sons <Pvt> \"Ltd\"");
+            partyLedger.Element("LANGUAGENAME.LIST")!.Element("NAME.LIST")!.Element("NAME")!.Value.Should().Be("Sharma & Sons <Pvt> \"Ltd\"");
+
+            var bankLedger = ledgers.FirstOrDefault(l => (string?)l.Attribute("NAME") == bankLedgerName);
+            bankLedger.Should().NotBeNull();
+            bankLedger!.Element("NAME")!.Value.Should().Be(bankLedgerName);
+        }
+
+        [Fact]
+        public void GenerateTallyXml_LedgerMasters_DeduplicatesMultipleTransactionsWithIdenticalLedger()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "ICICI Bank",
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction { TransactionDate = new DateTime(2026, 9, 1), WithdrawalAmount = 100m, TargetLedgerName = "Suspense", Type = TransactionType.Withdrawal },
+                    new BankTransaction { TransactionDate = new DateTime(2026, 9, 2), WithdrawalAmount = 200m, TargetLedgerName = "Suspense", Type = TransactionType.Withdrawal },
+                    new BankTransaction { TransactionDate = new DateTime(2026, 9, 3), WithdrawalAmount = 300m, TargetLedgerName = "Suspense", Type = TransactionType.Withdrawal },
+                    new BankTransaction { TransactionDate = new DateTime(2026, 9, 4), DepositAmount = 400m, TargetLedgerName = "Sales A/c", Type = TransactionType.Deposit },
+                    new BankTransaction { TransactionDate = new DateTime(2026, 9, 5), DepositAmount = 500m, TargetLedgerName = "Sales A/c", Type = TransactionType.Deposit }
+                }
+            };
+
+            string xml = _service.GenerateTallyXml(statement, "ICICI Bank A/c");
+            var xdoc = System.Xml.Linq.XDocument.Parse(xml);
+
+            var ledgers = xdoc.Descendants("LEDGER").ToList();
+            // Exactly 3 unique ledgers: "Suspense", "Sales A/c", and "ICICI Bank A/c"
+            ledgers.Should().HaveCount(3);
+            ledgers.Select(l => (string?)l.Attribute("NAME")).Should().BeEquivalentTo(new[] { "Suspense", "Sales A/c", "ICICI Bank A/c" });
+        }
+
+        [Fact]
+        public void GenerateTallyXml_ContraTransaction_EmitsProperContraVoucherEnvelope()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "State Bank of India",
+                Transactions = new List<BankTransaction>
+                {
+                    new BankTransaction
+                    {
+                        TransactionDate = new DateTime(2026, 9, 15),
+                        WithdrawalAmount = 25000m,
+                        DepositAmount = 0m,
+                        TargetLedgerName = "Cash",
+                        RawNarration = "ATM Cash Withdrawal Self",
+                        Type = TransactionType.Contra
+                    }
+                }
+            };
+
+            string xml = _service.GenerateTallyXml(statement, "SBI Current A/c");
+            var xdoc = System.Xml.Linq.XDocument.Parse(xml);
+
+            var voucher = xdoc.Descendants("VOUCHER").FirstOrDefault();
+            voucher.Should().NotBeNull();
+            voucher!.Attribute("VCHTYPE")!.Value.Should().Be("Contra");
+            voucher.Element("VOUCHERTYPENAME")!.Value.Should().Be("Contra");
+
+            var entries = voucher.Descendants("ALLLEDGERENTRIES.LIST").ToList();
+            entries.Should().HaveCount(2);
+
+            // Debited Cash (+25,000 as positive amount) and Credited Bank (-25,000 as negative amount)
+            entries.Should().Contain(e => (string?)e.Element("LEDGERNAME") == "Cash" && (decimal)e.Element("AMOUNT")! == -25000m);
+            entries.Should().Contain(e => (string?)e.Element("LEDGERNAME") == "SBI Current A/c" && (decimal)e.Element("AMOUNT")! == 25000m);
+        }
+
+        [Fact]
+        public void GenerateTallyXml_EmptyTransactions_ProducesValidXmlWithBankMaster()
+        {
+            var statement = new StatementDocument
+            {
+                BankName = "Punjab National Bank",
+                Transactions = new List<BankTransaction>()
+            };
+
+            string xml = _service.GenerateTallyXml(statement, "PNB A/c");
+
+            var act = () => System.Xml.Linq.XDocument.Parse(xml);
+            act.Should().NotThrow();
+
+            var xdoc = act();
+            xdoc.Descendants("LEDGER").Should().HaveCount(1); // Only bank master
+            xdoc.Descendants("VOUCHER").Should().BeEmpty();
+        }
     }
 }
