@@ -392,6 +392,123 @@ namespace PostXMLTest.Views
             parentBorder!.Visibility.Should().Be(Visibility.Visible);
         }
 
+        [WpfFact]
+        public void HomeViewUserControl_WhenIsProcessingIsTrue_DisplaysUploadProcessingPanelAndHidesUploadIdlePanel()
+        {
+            var vm = CreateTestViewModel();
+            vm.IsStatementLoaded = false;
+            vm.IsProcessing = true;
+            vm.ProcessingFileName = "ICICI_Statement.pdf";
+            vm.ProcessingElapsedText = "00:05";
+            vm.ProcessingStatusTitle = "Parsing ICICI Statement...";
+            vm.ProcessingStatusDetails = "Extracting tabular coordinates...";
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var stackPanels = FindVisualChildren<StackPanel>(view).ToList();
+            var processingPanel = stackPanels.FirstOrDefault(s =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(s) == "Home_UploadProcessingPanel");
+            var idlePanel = stackPanels.FirstOrDefault(s =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(s) == "Home_UploadIdlePanel");
+
+            processingPanel.Should().NotBeNull();
+            processingPanel!.Visibility.Should().Be(Visibility.Visible);
+
+            idlePanel.Should().NotBeNull();
+            idlePanel!.Visibility.Should().Be(Visibility.Collapsed);
+
+            var textBlocks = FindVisualChildren<TextBlock>(view).ToList();
+            var fileNameBlock = textBlocks.FirstOrDefault(t =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(t) == "Home_TxtProcessingFileName");
+            fileNameBlock.Should().NotBeNull();
+            fileNameBlock!.Text.Should().Be("ICICI_Statement.pdf");
+
+            var timerBlock = textBlocks.FirstOrDefault(t =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(t) == "Home_TxtProcessingElapsedTimer");
+            timerBlock.Should().NotBeNull();
+            timerBlock!.Text.Should().Be("00:05");
+
+            var progressBars = FindVisualChildren<ProgressBar>(view).ToList();
+            var progressBar = progressBars.FirstOrDefault(p =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(p) == "Home_ProcessingProgressBar");
+            progressBar.Should().NotBeNull();
+            progressBar!.IsIndeterminate.Should().BeTrue();
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_WhenIsProcessingIsFalse_DisplaysUploadIdlePanelAndHidesUploadProcessingPanel()
+        {
+            var vm = CreateTestViewModel();
+            vm.IsStatementLoaded = false;
+            vm.IsProcessing = false;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var stackPanels = FindVisualChildren<StackPanel>(view).ToList();
+            var processingPanel = stackPanels.FirstOrDefault(s =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(s) == "Home_UploadProcessingPanel");
+            var idlePanel = stackPanels.FirstOrDefault(s =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(s) == "Home_UploadIdlePanel");
+
+            idlePanel.Should().NotBeNull();
+            idlePanel!.Visibility.Should().Be(Visibility.Visible);
+
+            processingPanel.Should().NotBeNull();
+            processingPanel!.Visibility.Should().Be(Visibility.Collapsed);
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_UploadNewFileButton_IsProminentAndHasSolidBlueStyle()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var buttons = FindVisualChildren<Button>(view).ToList();
+            var uploadBtn = buttons.FirstOrDefault(b =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(b) == "Home_BtnClearStatement");
+
+            uploadBtn.Should().NotBeNull();
+            uploadBtn!.Content.Should().Be("📄 Upload New File");
+            uploadBtn.Visibility.Should().Be(Visibility.Visible);
+        }
+
+        [WpfFact]
+        public void HomeViewUserControl_ExportButton_HasContentWithoutEllipsis()
+        {
+            var vm = CreateTestViewModel();
+            var doc = CreateSampleDocument();
+            vm.CurrentDocument = doc;
+            vm.Transactions.Add(doc.Transactions[0]);
+            vm.IsStatementLoaded = true;
+
+            var view = new HomeViewUserControl(vm);
+            view.Measure(new Size(1024, 768));
+            view.Arrange(new Rect(0, 0, 1024, 768));
+            view.UpdateLayout();
+
+            var buttons = FindVisualChildren<Button>(view).ToList();
+            var exportBtn = buttons.FirstOrDefault(b =>
+                System.Windows.Automation.AutomationProperties.GetAutomationId(b) == "Home_BtnOpenExportDialog");
+
+            exportBtn.Should().NotBeNull();
+            exportBtn!.Content.Should().Be("📤 Export");
+            ((string)exportBtn.Content).Should().NotContain("...");
+        }
+
         private static HomeViewModel CreateTestViewModel()
         {
             var parserMock = new Mock<IBankStatementParser>();

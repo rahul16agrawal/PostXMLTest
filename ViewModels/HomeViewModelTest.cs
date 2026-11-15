@@ -1515,5 +1515,45 @@ namespace PostXMLTest.ViewModels
         }
 
         #endregion
+
+        #region Processing Timer & Status Tests
+
+        [Fact]
+        public void Constructor_SetsDefaultProcessingProperties()
+        {
+            _viewModel.ProcessingElapsedText.Should().Be("00:00");
+            _viewModel.ProcessingFileName.Should().BeEmpty();
+            _viewModel.ProcessingStatusTitle.Should().Be("Analyzing Bank Statement...");
+            _viewModel.ProcessingStatusDetails.Should().Contain("Extracting tabular coordinates");
+        }
+
+        [Fact]
+        public void StartProcessingTimer_SetsFileNameAndTitleAndStartsTimer()
+        {
+            _viewModel.StartProcessingTimer(@"C:\statements\HDFC_Statement_Oct2026.pdf", "Custom Processing Title", "Custom details message");
+
+            _viewModel.ProcessingFileName.Should().Be("HDFC_Statement_Oct2026.pdf");
+            _viewModel.ProcessingStatusTitle.Should().Be("Custom Processing Title");
+            _viewModel.ProcessingStatusDetails.Should().Be("Custom details message");
+            _viewModel.ProcessingElapsedText.Should().Be("00:00");
+
+            _viewModel.StopProcessingTimer();
+        }
+
+        [Fact]
+        public void ClearStatement_ResetsProcessingTimerAndProperties()
+        {
+            _viewModel.StartProcessingTimer(@"C:\statements\Test.pdf", "Active Processing", "Details");
+            _viewModel.ProcessingElapsedText = "00:15";
+
+            _viewModel.ClearStatement();
+
+            _viewModel.ProcessingFileName.Should().BeEmpty();
+            _viewModel.ProcessingElapsedText.Should().Be("00:00");
+            _viewModel.ProcessingStatusTitle.Should().Be("Analyzing Bank Statement...");
+            _viewModel.ProcessingStatusDetails.Should().Contain("Extracting tabular coordinates");
+        }
+
+        #endregion
     }
 }
